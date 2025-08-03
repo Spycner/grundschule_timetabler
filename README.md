@@ -19,15 +19,16 @@ A modern, web-based timetabling application designed specifically for German Gru
 - Teacher model with full CRUD operations
 - Class model with full CRUD operations
 - Subject model with full CRUD operations
+- TimeSlot model with schedule grid management
+- Schedule model with comprehensive conflict detection
 - Database migrations with Alembic
-- Test-Driven Development setup (47 tests passing)
+- Test-Driven Development setup (74 tests passing)
 - Pre-commit hooks for code quality
 - Development tooling (uv, ruff, ty)
 - Development data seeders for all models
 
 ### 🚧 In Progress
-- Schedule model implementation
-- Conflict detection for double bookings
+- Frontend setup with React/TypeScript
 
 ### 📋 Planned
 - Frontend with React/TypeScript
@@ -141,9 +142,15 @@ make migrate-down                            # Rollback last migration
 
 ### Current
 - **Teacher Management**: Create, update, and manage teacher profiles
+- **Class Management**: Define classes with grades and room assignments
+- **Subject Management**: Configure subjects with color coding
+- **TimeSlot Management**: Define weekly schedule grid with breaks
+- **Schedule Management**: Create timetables with automatic conflict detection
+- **Conflict Detection**: Prevent double-booking of teachers, classes, and rooms
+- **A/B Week Support**: Handle alternating week schedules
 - **API Versioning**: Future-proof API design with version control
 - **Database Migrations**: Safe schema evolution with Alembic
-- **Comprehensive Testing**: TDD with pytest
+- **Comprehensive Testing**: TDD with pytest (74 tests)
 
 ### Planned
 - **Automatic Scheduling**: OR-Tools based constraint solver
@@ -171,6 +178,39 @@ curl -X POST http://localhost:8000/api/v1/teachers \
 ### List All Teachers
 ```bash
 curl http://localhost:8000/api/v1/teachers
+```
+
+### Create a Schedule Entry
+```bash
+curl -X POST http://localhost:8000/api/v1/schedule \
+  -H "Content-Type: application/json" \
+  -d '{
+    "class_id": 1,
+    "teacher_id": 1,
+    "subject_id": 1,
+    "timeslot_id": 1,
+    "room": "101",
+    "week_type": "ALL"
+  }'
+```
+
+### Check for Conflicts
+```bash
+curl -X POST http://localhost:8000/api/v1/schedule/validate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "class_id": 1,
+    "teacher_id": 1,
+    "subject_id": 1,
+    "timeslot_id": 1,
+    "room": "101",
+    "week_type": "ALL"
+  }'
+```
+
+### Get Schedule for a Class
+```bash
+curl http://localhost:8000/api/v1/schedule/class/1
 ```
 
 ## 🤝 Contributing

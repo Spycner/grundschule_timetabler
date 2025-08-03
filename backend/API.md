@@ -272,6 +272,219 @@ Generate a default weekly schedule for a German Grundschule.
 
 ---
 
+### Schedule
+
+#### GET /api/v1/schedule
+List all schedule entries with optional filters.
+
+**Query Parameters:**
+- `skip` (int, optional): Number of records to skip (default: 0)
+- `limit` (int, optional): Maximum number of records to return (default: 100)
+- `week_type` (string, optional): Filter by week type (ALL, A, or B)
+- `day` (int, optional): Filter by day (1-5)
+- `include_breaks` (bool, optional): Include break periods (default: true)
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "class": {"id": 1, "name": "1a", "grade": 1},
+    "teacher": {"id": 1, "first_name": "Maria", "last_name": "Müller", "abbreviation": "MUE"},
+    "subject": {"id": 1, "name": "Mathematik", "code": "MA", "color": "#2563EB"},
+    "timeslot": {"id": 1, "day": 1, "period": 1, "start_time": "08:00", "end_time": "08:45", "is_break": false},
+    "room": "101",
+    "week_type": "ALL",
+    "created_at": "2025-08-03T10:00:00",
+    "updated_at": "2025-08-03T10:00:00"
+  }
+]
+```
+
+#### GET /api/v1/schedule/{id}
+Get a specific schedule entry by ID.
+
+#### POST /api/v1/schedule
+Create a new schedule entry.
+
+**Request Body:**
+```json
+{
+  "class_id": 1,
+  "teacher_id": 1,
+  "subject_id": 1,
+  "timeslot_id": 1,
+  "room": "101",
+  "week_type": "ALL"
+}
+```
+
+**Validation:**
+- Prevents teacher conflicts (same teacher in two places)
+- Prevents class conflicts (same class with two subjects)
+- Prevents room conflicts (same room booked twice)
+- Prevents scheduling during break periods
+- `week_type` must be "ALL", "A", or "B"
+
+#### PUT /api/v1/schedule/{id}
+Update a schedule entry (partial update supported).
+
+**Request Body:**
+```json
+{
+  "room": "102",
+  "week_type": "A"
+}
+```
+
+#### DELETE /api/v1/schedule/{id}
+Delete a schedule entry.
+
+#### GET /api/v1/schedule/class/{class_id}
+Get all schedule entries for a specific class.
+
+**Query Parameters:**
+- `week_type` (string, optional): Filter by week type (ALL, A, or B)
+
+**Response:** Array of schedule entries sorted by day and period.
+
+#### GET /api/v1/schedule/teacher/{teacher_id}
+Get all schedule entries for a specific teacher.
+
+**Query Parameters:**
+- `week_type` (string, optional): Filter by week type (ALL, A, or B)
+
+**Response:** Array of schedule entries sorted by day and period.
+
+#### GET /api/v1/schedule/room/{room}
+Get all schedule entries for a specific room.
+
+**Query Parameters:**
+- `week_type` (string, optional): Filter by week type (ALL, A, or B)
+
+**Response:** Array of schedule entries sorted by day and period.
+
+#### GET /api/v1/schedule/timeslot/{timeslot_id}
+Get all schedule entries at a specific timeslot.
+
+**Query Parameters:**
+- `week_type` (string, optional): Filter by week type (ALL, A, or B)
+
+#### POST /api/v1/schedule/validate
+Validate a schedule entry for conflicts without saving.
+
+**Request Body:**
+```json
+{
+  "class_id": 1,
+  "teacher_id": 1,
+  "subject_id": 1,
+  "timeslot_id": 1,
+  "room": "101",
+  "week_type": "ALL"
+}
+```
+
+**Response:**
+```json
+{
+  "valid": false,
+  "conflicts": [
+    {
+      "type": "teacher_conflict",
+      "message": "Teacher is already scheduled for another class at this time",
+      "existing_entry_id": 42
+    }
+  ]
+}
+```
+
+**Conflict Types:**
+- `teacher_conflict`: Teacher already scheduled
+- `class_conflict`: Class already has a subject
+- `room_conflict`: Room already booked
+- `break_conflict`: Attempting to schedule during break
+
+#### GET /api/v1/schedule/conflicts
+List all conflicts in the current schedule.
+
+**Response:**
+```json
+[
+  {
+    "schedule_id": 1,
+    "conflicts": [
+      {
+        "type": "teacher_conflict",
+        "message": "Teacher is already scheduled for another class at this time",
+        "existing_entry_id": 2
+      }
+    ]
+  }
+]
+```
+
+#### POST /api/v1/schedule/bulk
+Create multiple schedule entries at once.
+
+**Request Body:**
+```json
+[
+  {
+    "class_id": 1,
+    "teacher_id": 1,
+    "subject_id": 1,
+    "timeslot_id": 1,
+    "room": "101",
+    "week_type": "ALL"
+  },
+  {
+    "class_id": 1,
+    "teacher_id": 1,
+    "subject_id": 1,
+    "timeslot_id": 2,
+    "room": "101",
+    "week_type": "ALL"
+  }
+]
+```
+
+**Response:** Array of created schedule entries.
+
+**Note:** All entries are validated before any are created. If any conflict is detected, none are created.
+
+### A/B Week Scheduling
+
+The system supports alternating week schedules, common in German schools for subjects like Religion/Ethics:
+
+- **Week Type "ALL"**: Entry applies to all weeks
+- **Week Type "A"**: Entry only applies to A weeks
+- **Week Type "B"**: Entry only applies to B weeks
+
+**Example:** Religion in week A, Ethics in week B:
+```json
+[
+  {
+    "class_id": 1,
+    "teacher_id": 2,
+    "subject_id": 8,  // Religion
+    "timeslot_id": 15,
+    "room": "Chapel",
+    "week_type": "A"
+  },
+  {
+    "class_id": 1,
+    "teacher_id": 3,
+    "subject_id": 9,  // Ethics
+    "timeslot_id": 15,
+    "room": "103",
+    "week_type": "B"
+  }
+]
+```
+
+---
+
 ## Error Responses
 
 ### 400 Bad Request
@@ -377,6 +590,7 @@ This creates:
 - 8 sample classes (2 per grade)
 - 9 sample subjects
 - 40 timeslots (standard weekly schedule)
+- Sample schedule entries for class 1a (including A/B week examples)
 
 ### Testing
 Run the test suite:
@@ -384,4 +598,4 @@ Run the test suite:
 make test
 ```
 
-Currently 60 tests covering all models and endpoints.
+Currently 74 tests covering all models and endpoints.
