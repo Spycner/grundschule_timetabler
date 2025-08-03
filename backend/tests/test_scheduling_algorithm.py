@@ -155,12 +155,15 @@ class TestSchedulingAlgorithm:
         # Type assertion for ty
         assert teacher is not None
 
+        from datetime import UTC, datetime
+
         for timeslot in timeslots:
             availability = TeacherAvailability(
                 teacher_id=teacher.id,
                 weekday=timeslot.day - 1,
                 period=timeslot.period,
                 availability_type=AvailabilityType.BLOCKED,
+                effective_from=datetime.now(UTC).date(),
             )
             db.add(availability)
         db.commit()
@@ -257,10 +260,19 @@ class TestSchedulingAlgorithm:
         self, db: Session, _simple_scheduling_setup
     ):
         """Test that core subjects are preferentially scheduled in morning."""
-        # Create core subjects
-        deutsch = Subject(name="Deutsch", code="DE", color="#FF0000")
-        mathe = Subject(name="Mathematik", code="MA", color="#00FF00")
-        db.add_all([deutsch, mathe])
+        # Get existing core subjects (created by fixtures)
+        deutsch = db.query(Subject).filter(Subject.code == "DE").first()
+        mathe = db.query(Subject).filter(Subject.code == "MA").first()
+
+        # Create subjects if they don't exist (fallback)
+        if not deutsch:
+            deutsch = Subject(name="Deutsch", code="DE", color="#FF0000")
+            db.add(deutsch)
+        if not mathe:
+            mathe = Subject(name="Mathematik", code="MA", color="#00FF00")
+            db.add(mathe)
+
+        db.flush()  # Get IDs for any new subjects
 
         # Create teacher qualifications
         teacher = db.query(Teacher).first()
@@ -270,18 +282,46 @@ class TestSchedulingAlgorithm:
         # Type assertion for ty
         assert teacher is not None
 
-        ts1 = TeacherSubject(
-            teacher_id=teacher.id,
-            subject_id=deutsch.id,
-            qualification_level=QualificationLevel.PRIMARY,
+        # Check if teacher-subject assignments already exist
+        existing_ts1 = (
+            db.query(TeacherSubject)
+            .filter(
+                TeacherSubject.teacher_id == teacher.id,
+                TeacherSubject.subject_id == deutsch.id,
+            )
+            .first()
         )
-        ts2 = TeacherSubject(
-            teacher_id=teacher.id,
-            subject_id=mathe.id,
-            qualification_level=QualificationLevel.PRIMARY,
+
+        existing_ts2 = (
+            db.query(TeacherSubject)
+            .filter(
+                TeacherSubject.teacher_id == teacher.id,
+                TeacherSubject.subject_id == mathe.id,
+            )
+            .first()
         )
-        db.add_all([ts1, ts2])
-        db.commit()
+
+        # Only create assignments that don't exist
+        new_assignments = []
+        if not existing_ts1:
+            ts1 = TeacherSubject(
+                teacher_id=teacher.id,
+                subject_id=deutsch.id,
+                qualification_level=QualificationLevel.PRIMARY,
+            )
+            new_assignments.append(ts1)
+
+        if not existing_ts2:
+            ts2 = TeacherSubject(
+                teacher_id=teacher.id,
+                subject_id=mathe.id,
+                qualification_level=QualificationLevel.PRIMARY,
+            )
+            new_assignments.append(ts2)
+
+        if new_assignments:
+            db.add_all(new_assignments)
+            db.commit()
 
         algorithm = SchedulingAlgorithm(db)
         solution = algorithm.solve(time_limit_seconds=15)

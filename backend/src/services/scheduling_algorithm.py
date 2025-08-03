@@ -410,6 +410,26 @@ class SchedulingAlgorithm:
 
         # Load data and create model
         self.load_data()
+
+        # Check if we have minimum required data
+        if (
+            not self.teachers
+            or not self.classes
+            or not self.subjects
+            or not self.timeslots
+        ):
+            generation_time = time.time() - start_time
+            return SchedulingSolution(
+                schedules=[],
+                quality_score=0.0,
+                generation_time=generation_time,
+                satisfied_constraints=[],
+                violated_constraints=[
+                    "Insufficient data: missing teachers, classes, subjects, or timeslots"
+                ],
+                objective_value=0,
+            )
+
         self.create_variables()
 
         # Add fixed assignments as constraints
