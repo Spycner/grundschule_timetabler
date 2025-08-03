@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 def test_health_check(client: TestClient):
     """Test basic health check endpoint."""
-    response = client.get("/api/health")
+    response = client.get("/api/v1/health")
     assert response.status_code == 200
 
     data = response.json()
@@ -18,7 +18,7 @@ def test_health_check(client: TestClient):
 
 def test_readiness_check(client: TestClient):
     """Test readiness check including database connectivity."""
-    response = client.get("/api/health/ready")
+    response = client.get("/api/v1/health/ready")
     assert response.status_code == 200
 
     data = response.json()
@@ -38,4 +38,4 @@ def test_root_endpoint(client: TestClient):
     assert data["message"] == "Welcome to Grundschule Timetabler API"
     assert data["version"] == "0.1.0"
     assert data["docs"] == "/docs"
-    assert data["health"] == "/api/health"
+    assert data["health"] == "/api/v1/health"

@@ -143,7 +143,7 @@ def test_create_teacher():
 - **API versioning structure** (`/api/v1/`)
 - **Teacher model** with full CRUD operations (TDD approach)
 - **Alembic migrations** for database management
-- **15 comprehensive tests** for Teacher endpoints
+- **33 comprehensive tests** total (15 Teacher, 15 Class, 3 Health)
 
 ### Current Phase: MVP Foundation (Simplified Approach)
 Focus: Get a working prototype for testing with real users (Hesse pre-school contacts)
@@ -266,16 +266,22 @@ npm test
 - `POST /api/v1/teachers` - Create new teacher
 - `PUT /api/v1/teachers/{id}` - Update teacher
 - `DELETE /api/v1/teachers/{id}` - Delete teacher
+- `GET /api/v1/classes` - List all classes
+- `GET /api/v1/classes/{id}` - Get specific class
+- `POST /api/v1/classes` - Create new class
+- `PUT /api/v1/classes/{id}` - Update class
+- `DELETE /api/v1/classes/{id}` - Delete class
 
 ### Database Management
 - **Alembic Migrations**: Database schema is now managed via migrations
-- **Current Migration**: `71430f948602_initial_migration_with_teacher_model`
+- **Current Migration**: `90410194aba9_add_class_model`
 - **Apply Migrations**: Run `make migrate-up` before starting the server
 - **Create Migrations**: Use `make migrate-create name="description"` for schema changes
+- **Important**: All models must be imported in `src/models/__init__.py` for Alembic to detect them
 
 ### Immediate Next Steps (MVP Focus)
 1. ~~Create simple Teacher model with basic CRUD (TDD)~~ ✅
-2. Create simple Class model with basic CRUD (TDD)
+2. ~~Create simple Class model with basic CRUD (TDD)~~ ✅
 3. Create simple Subject model with basic CRUD (TDD)
 4. Create TimeSlot model for schedule grid (TDD)
 5. Create Schedule model to link entities (TDD)
