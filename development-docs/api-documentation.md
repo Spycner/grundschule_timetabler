@@ -242,6 +242,226 @@ Delete a teacher.
 **Error Responses**
 - `404 Not Found` - Teacher not found
 
+### Class Management
+
+#### GET /api/v1/classes
+List all classes with optional pagination.
+
+**Query Parameters**
+- `skip` (int, optional): Number of records to skip (default: 0)
+- `limit` (int, optional): Maximum number of records to return (default: 100)
+
+**Response**
+```json
+[
+  {
+    "id": 1,
+    "name": "1a",
+    "grade": 1,
+    "size": 22,
+    "home_room": "Raum 101",
+    "created_at": "2025-08-03T10:00:00Z",
+    "updated_at": "2025-08-03T10:00:00Z"
+  }
+]
+```
+
+#### GET /api/v1/classes/{id}
+Get a specific class by ID.
+
+**Path Parameters**
+- `id` (int): Class ID
+
+**Response**
+```json
+{
+  "id": 1,
+  "name": "1a",
+  "grade": 1,
+  "size": 22,
+  "home_room": "Raum 101",
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T10:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Class not found
+
+#### POST /api/v1/classes
+Create a new class.
+
+**Request Body**
+```json
+{
+  "name": "1a",
+  "grade": 1,
+  "size": 22,
+  "home_room": "Raum 101"
+}
+```
+
+**Response**
+- `201 Created` with created class object
+
+**Error Responses**
+- `409 Conflict` - Class with this name already exists
+- `422 Unprocessable Entity` - Validation error (grade must be 1-4, size must be 1-40)
+
+#### PUT /api/v1/classes/{id}
+Update an existing class. All fields are optional.
+
+**Path Parameters**
+- `id` (int): Class ID
+
+**Request Body**
+```json
+{
+  "size": 24,
+  "home_room": "Raum 102"
+}
+```
+
+**Response**
+```json
+{
+  "id": 1,
+  "name": "1a",
+  "grade": 1,
+  "size": 24,
+  "home_room": "Raum 102",
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T12:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Class not found
+- `409 Conflict` - Name already exists
+- `422 Unprocessable Entity` - Validation error
+
+#### DELETE /api/v1/classes/{id}
+Delete a class.
+
+**Path Parameters**
+- `id` (int): Class ID
+
+**Response**
+- `204 No Content` - Successfully deleted
+
+**Error Responses**
+- `404 Not Found` - Class not found
+
+### Subject Management
+
+#### GET /api/v1/subjects
+List all subjects with optional pagination.
+
+**Query Parameters**
+- `skip` (int, optional): Number of records to skip (default: 0)
+- `limit` (int, optional): Maximum number of records to return (default: 100)
+
+**Response**
+```json
+[
+  {
+    "id": 1,
+    "name": "Mathematik",
+    "code": "MA",
+    "color": "#2563EB",
+    "created_at": "2025-08-03T10:00:00Z",
+    "updated_at": "2025-08-03T10:00:00Z"
+  }
+]
+```
+
+#### GET /api/v1/subjects/{id}
+Get a specific subject by ID.
+
+**Path Parameters**
+- `id` (int): Subject ID
+
+**Response**
+```json
+{
+  "id": 1,
+  "name": "Mathematik",
+  "code": "MA",
+  "color": "#2563EB",
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T10:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Subject not found
+
+#### POST /api/v1/subjects
+Create a new subject.
+
+**Request Body**
+```json
+{
+  "name": "Mathematik",
+  "code": "MA",
+  "color": "#2563EB"
+}
+```
+
+**Validation Rules**
+- `name`: Must be unique
+- `code`: Must be unique, 2-4 characters, automatically converted to uppercase
+- `color`: Must be valid hex color format (#RRGGBB)
+
+**Response**
+- `201 Created` with created subject object
+
+**Error Responses**
+- `409 Conflict` - Subject with this name or code already exists
+- `422 Unprocessable Entity` - Validation error (invalid color format, code length)
+
+#### PUT /api/v1/subjects/{id}
+Update an existing subject. All fields are optional.
+
+**Path Parameters**
+- `id` (int): Subject ID
+
+**Request Body**
+```json
+{
+  "color": "#3B82F6"
+}
+```
+
+**Response**
+```json
+{
+  "id": 1,
+  "name": "Mathematik",
+  "code": "MA",
+  "color": "#3B82F6",
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T12:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Subject not found
+- `409 Conflict` - Name or code already exists
+- `422 Unprocessable Entity` - Validation error
+
+#### DELETE /api/v1/subjects/{id}
+Delete a subject.
+
+**Path Parameters**
+- `id` (int): Subject ID
+
+**Response**
+- `204 No Content` - Successfully deleted
+
+**Error Responses**
+- `404 Not Found` - Subject not found
+
 ## Pagination
 
 For endpoints that return lists, pagination is implemented using `skip` and `limit` parameters:
@@ -366,20 +586,6 @@ async function getTeachers() {
 ## Coming Soon
 
 ### Planned Endpoints
-
-#### Class Management
-- `GET /api/v1/classes` - List all classes
-- `GET /api/v1/classes/{id}` - Get specific class
-- `POST /api/v1/classes` - Create new class
-- `PUT /api/v1/classes/{id}` - Update class
-- `DELETE /api/v1/classes/{id}` - Delete class
-
-#### Subject Management
-- `GET /api/v1/subjects` - List all subjects
-- `GET /api/v1/subjects/{id}` - Get specific subject
-- `POST /api/v1/subjects` - Create new subject
-- `PUT /api/v1/subjects/{id}` - Update subject
-- `DELETE /api/v1/subjects/{id}` - Delete subject
 
 #### Schedule Management
 - `GET /api/v1/schedules` - List all schedules

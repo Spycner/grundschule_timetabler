@@ -6,6 +6,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from src.models.class_ import Class
+from src.models.subject import Subject
 from src.models.teacher import Teacher
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,11 @@ class DatabaseSeeder:
             stats["classes"] = len(classes)
             logger.info(f"Seeded {len(classes)} classes")
 
-            # TODO: Implement subject seeding when Subject model is created
+            # Seed subjects
+            subjects = self.seed_subjects()
+            stats["subjects"] = len(subjects)
+            logger.info(f"Seeded {len(subjects)} subjects")
+
             # TODO: Implement timeslot seeding when TimeSlot model is created
             # TODO: Implement schedule seeding when Schedule model is created
 
@@ -206,6 +211,70 @@ class DatabaseSeeder:
         self.db.flush()  # Get IDs without committing
         return classes
 
+    def seed_subjects(self) -> list[Subject]:
+        """Seed sample subjects common in German Grundschule."""
+        subjects_data = [
+            {
+                "name": "Deutsch",
+                "code": "DE",
+                "color": "#DC2626",  # Red
+            },
+            {
+                "name": "Mathematik",
+                "code": "MA",
+                "color": "#2563EB",  # Blue
+            },
+            {
+                "name": "Sachunterricht",
+                "code": "SU",
+                "color": "#7C3AED",  # Purple
+            },
+            {
+                "name": "Englisch",
+                "code": "EN",
+                "color": "#059669",  # Emerald
+            },
+            {
+                "name": "Sport",
+                "code": "SPO",
+                "color": "#16A34A",  # Green
+            },
+            {
+                "name": "Musik",
+                "code": "MU",
+                "color": "#F59E0B",  # Amber
+            },
+            {
+                "name": "Kunst",
+                "code": "KU",
+                "color": "#EC4899",  # Pink
+            },
+            {
+                "name": "Religion",
+                "code": "REL",
+                "color": "#8B5CF6",  # Violet
+            },
+            {
+                "name": "Ethik",
+                "code": "ETH",
+                "color": "#06B6D4",  # Cyan
+            },
+        ]
+
+        subjects = []
+        for data in subjects_data:
+            # Check if subject already exists
+            existing = self.db.query(Subject).filter_by(name=data["name"]).first()
+            if not existing:
+                subject = Subject(**data)
+                self.db.add(subject)
+                subjects.append(subject)
+            else:
+                subjects.append(existing)
+
+        self.db.flush()  # Get IDs without committing
+        return subjects
+
     def clear_all(self) -> dict[str, int]:
         """Clear all seeded data (use with caution)."""
         stats = {
@@ -220,7 +289,9 @@ class DatabaseSeeder:
             # Clear in reverse order of dependencies
             # TODO: Clear schedules when Schedule model is implemented
             # TODO: Clear timeslots when TimeSlot model is implemented
-            # TODO: Clear subjects when Subject model is implemented
+
+            # Clear subjects
+            stats["subjects"] = self.db.query(Subject).delete()
 
             # Clear classes
             stats["classes"] = self.db.query(Class).delete()

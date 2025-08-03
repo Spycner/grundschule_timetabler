@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from src.api.v1.routes import classes, health, teachers
+from src.api.v1.routes import classes, health, subjects, teachers
 
 router = APIRouter()
 
@@ -14,3 +14,6 @@ router.include_router(teachers.router, prefix="/teachers", tags=["teachers"])
 
 # Include classes routes
 router.include_router(classes.router, prefix="/classes", tags=["classes"])
+
+# Include subjects routes
+router.include_router(subjects.router, prefix="/subjects", tags=["subjects"])

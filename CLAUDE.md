@@ -143,11 +143,12 @@ def test_create_teacher():
 - **API versioning structure** (`/api/v1/`)
 - **Teacher model** with full CRUD operations (TDD approach)
 - **Class model** with full CRUD operations (TDD approach)
+- **Subject model** with full CRUD operations (TDD approach)
 - **Alembic migrations** for database management
-- **33 comprehensive tests** total (15 Teacher, 15 Class, 3 Health)
+- **47 comprehensive tests** total (15 Teacher, 15 Class, 14 Subject, 3 Health)
 - **Docker & Docker Compose** configuration (with Valkey instead of Redis)
 - **GitHub Actions CI/CD** pipeline with comprehensive checks
-- **Development data seeders** for teachers and classes
+- **Development data seeders** for teachers, classes, and subjects
 
 ### Current Phase: MVP Foundation (Simplified Approach)
 Focus: Get a working prototype for testing with real users (Hesse pre-school contacts)
@@ -155,7 +156,7 @@ Focus: Get a working prototype for testing with real users (Hesse pre-school con
 #### Phase 1: Basic Entities & CRUD (Current)
 - Simple Teacher model (name, email, max_hours, part_time status)
 - Simple Class model (name, grade, size, home_room)
-- Simple Subject model (name, code, weekly_hours)
+- Simple Subject model (name, code, color for UI) ✅
 - Basic TimeSlot model (day, period, times)
 - Manual Schedule creation (link entities together)
 - Conflict detection (no double bookings)
@@ -307,10 +308,15 @@ docker-compose up -d
 - `POST /api/v1/classes` - Create new class
 - `PUT /api/v1/classes/{id}` - Update class
 - `DELETE /api/v1/classes/{id}` - Delete class
+- `GET /api/v1/subjects` - List all subjects
+- `GET /api/v1/subjects/{id}` - Get specific subject
+- `POST /api/v1/subjects` - Create new subject
+- `PUT /api/v1/subjects/{id}` - Update subject
+- `DELETE /api/v1/subjects/{id}` - Delete subject
 
 ### Database Management
 - **Alembic Migrations**: Database schema is now managed via migrations
-- **Current Migration**: `90410194aba9_add_class_model`
+- **Current Migration**: `15b0cf10a170_add_subject_model`
 - **Apply Migrations**: Run `make migrate-up` before starting the server
 - **Create Migrations**: Use `make migrate-create name="description"` for schema changes
 - **Important**: All models must be imported in `src/models/__init__.py` for Alembic to detect them
@@ -318,7 +324,7 @@ docker-compose up -d
 ### Immediate Next Steps (MVP Focus)
 1. ~~Create simple Teacher model with basic CRUD (TDD)~~ ✅
 2. ~~Create simple Class model with basic CRUD (TDD)~~ ✅
-3. Create simple Subject model with basic CRUD (TDD)
+3. ~~Create simple Subject model with basic CRUD (TDD)~~ ✅
 4. Create TimeSlot model for schedule grid (TDD)
 5. Create Schedule model to link entities (TDD)
 6. Add conflict detection for double bookings
