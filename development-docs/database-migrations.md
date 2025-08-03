@@ -87,6 +87,21 @@ uv run alembic downgrade <revision_id>
 
 ## Creating Migrations
 
+### ⚠️ IMPORTANT: Model Import Requirement
+
+**All SQLAlchemy models MUST be imported in `src/models/__init__.py` for Alembic to detect them during automatic migration generation.**
+
+```python
+# src/models/__init__.py
+from src.models.teacher import Teacher
+from src.models.class_ import Class
+from src.models.subject import Subject  # Don't forget new models!
+
+__all__ = ["Teacher", "Class", "Subject"]
+```
+
+If you forget this step, Alembic will generate an empty migration with no changes detected!
+
 ### Automatic Migration Generation
 
 For most schema changes, Alembic can automatically generate migrations:
@@ -244,11 +259,13 @@ def upgrade():
 ### Adding a New Model
 
 1. Create the SQLAlchemy model in `src/models/`
-2. Import it in `src/models/__init__.py`
+2. **CRITICAL: Import it in `src/models/__init__.py`** ← This step is essential!
 3. Generate migration:
 ```bash
 make migrate-create name="add_schedule_model"
 ```
+4. Review the generated migration file to ensure it's not empty
+5. Apply the migration: `make migrate-up`
 
 ### Adding a Column
 
@@ -290,6 +307,24 @@ def upgrade():
 ```
 
 ## Troubleshooting
+
+### Empty Migration Files (No Changes Detected)
+
+**Problem**: `alembic revision --autogenerate` creates empty `upgrade()` and `downgrade()` functions.
+
+**Most Common Cause**: The model isn't imported in `src/models/__init__.py`.
+
+**Solution**:
+1. Import your model in `src/models/__init__.py`
+2. If you already generated an empty migration:
+   ```bash
+   uv run alembic downgrade -1  # Rollback
+   rm alembic/versions/<empty_migration>.py  # Delete it
+   ```
+3. Regenerate the migration:
+   ```bash
+   make migrate-create name="your_model_name"
+   ```
 
 ### "Target database is not up to date"
 
