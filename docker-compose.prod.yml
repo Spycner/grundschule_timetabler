@@ -3,9 +3,12 @@ version: '3.8'
 services:
   # Backend API - Production configuration
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    # Use pre-built image from GitHub Container Registry
+    image: ghcr.io/spycner/grundschule_timetabler:latest
+    # Or build locally if needed:
+    # build:
+    #   context: ./backend
+    #   dockerfile: Dockerfile
     container_name: grundschule-backend
     ports:
       - "8000:8000"

@@ -142,8 +142,12 @@ def test_create_teacher():
 - Pre-commit hooks configuration
 - **API versioning structure** (`/api/v1/`)
 - **Teacher model** with full CRUD operations (TDD approach)
+- **Class model** with full CRUD operations (TDD approach)
 - **Alembic migrations** for database management
 - **33 comprehensive tests** total (15 Teacher, 15 Class, 3 Health)
+- **Docker & Docker Compose** configuration (with Valkey instead of Redis)
+- **GitHub Actions CI/CD** pipeline with comprehensive checks
+- **Development data seeders** for teachers and classes
 
 ### Current Phase: MVP Foundation (Simplified Approach)
 Focus: Get a working prototype for testing with real users (Hesse pre-school contacts)
@@ -216,6 +220,19 @@ make migrate-create name="description"  # Create new migration
 make migrate-current # Show current migration
 make migrate-history # Show migration history
 
+# Seeder commands:
+make seed            # Seed development data
+make seed-clear      # Clear and reseed database
+make seed-clear-only # Clear all seeded data
+
+# Docker commands:
+make docker-build    # Build Docker images
+make docker-up       # Start all services
+make docker-down     # Stop all services
+make docker-logs     # View logs
+make docker-shell    # Open shell in backend container
+make docker-clean    # Remove containers and volumes
+
 # Or manually:
 uv sync              # Install dependencies
 uv run uvicorn src.main:app --reload  # Run server
@@ -224,9 +241,10 @@ uv run ruff check .  # Lint
 uv run ruff format . # Format
 uvx --native-tls ty check  # Type check
 uv run alembic upgrade head  # Apply migrations
+uv run python src/seeders/run.py  # Run seeders
 ```
 
-### Frontend
+### Frontend (Not yet implemented)
 ```bash
 cd frontend
 npm install
@@ -235,13 +253,31 @@ npm run build
 npm test
 ```
 
+### Docker
+```bash
+# Start all services (from root directory)
+docker-compose up -d
+
+# Access services:
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+# Mailhog UI: http://localhost:8025
+# PostgreSQL: localhost:5432
+# Valkey (Redis): localhost:6379
+```
+
 ## Key Files and Directories
 - `/requirements/` - Detailed project requirements
 - `/tasks/` - Task management system (backlog, doing, completed)
 - `/backend/` - Python backend application (FastAPI)
+  - `/src/seeders/` - Database seeding scripts
+  - `/alembic/` - Database migrations
 - `/frontend/` - TypeScript frontend application (not yet implemented)
 - `/development-docs/` - Development reference documentation (uv, ty)
 - `/.vscode/` - VS Code workspace configuration
+- `/docker-compose.yml` - Docker services configuration
+- `/.github/workflows/` - CI/CD pipelines
+- `/DOCKER.md` - Docker setup documentation
 
 ## Current Working State
 

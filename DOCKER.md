@@ -6,6 +6,10 @@
 - Docker Compose V2 (included with Docker Desktop)
 - Make (optional, for using Makefile commands)
 
+## Using Pre-built Images
+
+For production deployments, you can use our pre-built images from GitHub Container Registry instead of building locally. See [DOCKER_REGISTRY.md](DOCKER_REGISTRY.md) for details.
+
 ## Quick Start
 
 ### 1. Copy Environment Variables

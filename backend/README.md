@@ -24,6 +24,7 @@ backend/
 │   ├── models/           # Database models
 │   ├── schemas/          # Pydantic validation schemas
 │   ├── services/         # Business logic
+│   ├── seeders/          # Database seeders for development
 │   ├── config.py         # Configuration
 │   └── main.py           # Application entry point
 ├── tests/                # Test files
@@ -33,7 +34,9 @@ backend/
 ├── pyproject.toml        # Project configuration
 ├── ruff.toml             # Ruff configuration
 ├── pytest.ini            # Pytest configuration
-└── alembic.ini           # Alembic configuration
+├── alembic.ini           # Alembic configuration
+├── Dockerfile            # Docker container definition
+└── .dockerignore         # Docker ignore patterns
 ```
 
 ## Setup
@@ -73,6 +76,18 @@ cp .env.example .env
 5. Install pre-commit hooks (for development):
 ```bash
 make pre-commit-install
+```
+
+## Docker Setup
+
+For Docker-based development, see the [Docker documentation](../DOCKER.md) in the root directory.
+
+Quick start with Docker:
+```bash
+# From root directory
+docker-compose up -d
+docker-compose exec backend alembic upgrade head
+docker-compose exec backend python src/seeders/run.py
 ```
 
 ## Development
@@ -175,6 +190,30 @@ Reset database (development only):
 make migrate-reset
 ```
 
+### Seeding Development Data
+
+For development, you can seed the database with sample data:
+
+```bash
+# Seed with sample teachers and classes
+make seed
+
+# Clear existing data and reseed
+make seed-clear
+
+# Only clear seeded data (no reseeding)
+make seed-clear-only
+
+# Or manually:
+uv run python src/seeders/run.py
+uv run python src/seeders/run.py --clear  # Clear and reseed
+uv run python src/seeders/run.py --clear-only  # Clear only
+```
+
+The seeder creates:
+- 8 sample teachers (mix of full-time and part-time)
+- 8 sample classes (grades 1-4, two classes per grade)
+
 ## API Endpoints
 
 All endpoints are versioned under `/api/v1/`
@@ -195,9 +234,19 @@ All endpoints are versioned under `/api/v1/`
   - Body: Any fields to update
 - `DELETE /api/v1/teachers/{id}` - Delete teacher
 
+### Class Management
+
+- `GET /api/v1/classes` - List all classes
+  - Query params: `skip` (offset), `limit` (max results)
+- `GET /api/v1/classes/{id}` - Get specific class
+- `POST /api/v1/classes` - Create new class
+  - Body: `{name, grade, size, home_room}`
+- `PUT /api/v1/classes/{id}` - Update class
+  - Body: Any fields to update
+- `DELETE /api/v1/classes/{id}` - Delete class
+
 ### Coming Soon
 
-- Class management
 - Subject management
 - Timetable generation
 - Conflict resolution
