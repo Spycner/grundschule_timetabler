@@ -6,6 +6,15 @@ target-version = "py312"
 # Line length to match Black's default
 line-length = 88
 
+# Exclude directories
+exclude = [
+    ".venv",
+    "alembic",
+    "__pycache__",
+    ".pytest_cache",
+]
+
+[lint]
 # Enable pycodestyle, pyflakes, isort
 select = [
     "E",    # pycodestyle errors
@@ -18,7 +27,6 @@ select = [
     "C4",   # flake8-comprehensions
     "DTZ",  # flake8-datetimez
     "T10",  # flake8-debugger
-    "ISC",  # flake8-implicit-str-concat
     "PIE",  # flake8-pie
     "T20",  # flake8-print
     "Q",    # flake8-quotes
@@ -35,24 +43,17 @@ ignore = [
     "E501",  # Line too long (handled by formatter)
     "B008",  # Do not perform function calls in argument defaults
     "T201",  # Print statements (useful for debugging)
+    "ARG001", # Unused function argument (common in FastAPI)
+    "ISC001", # Conflicts with formatter
 ]
 
-# Exclude directories
-exclude = [
-    ".venv",
-    "alembic",
-    "__pycache__",
-    ".pytest_cache",
-]
-
-[per-file-ignores]
+[lint.per-file-ignores]
 # Allow unused imports in __init__.py files
 "__init__.py" = ["F401"]
 # Allow asserts in tests
 "tests/*" = ["S101"]
 
-[isort]
-profile = "black"
+[lint.isort]
 known-first-party = ["src"]
 
 [format]
