@@ -6,12 +6,13 @@ Backend API for the Grundschule Timetabler application - a scheduling system for
 
 - **Python 3.12** - Programming language
 - **FastAPI** - Web framework
-- **SQLAlchemy** - ORM
+- **SQLAlchemy** - ORM with relationship management
 - **Alembic** - Database migrations
 - **PostgreSQL/SQLite** - Database
 - **uv** - Package manager
 - **Ruff** - Linter and formatter
 - **ty** - Type checker (from Astral)
+- **pytest** - Testing framework with asyncio support (74 tests)
 
 ## Project Structure
 
@@ -213,6 +214,9 @@ uv run python src/seeders/run.py --clear-only  # Clear only
 The seeder creates:
 - 8 sample teachers (mix of full-time and part-time)
 - 8 sample classes (grades 1-4, two classes per grade)
+- 9 sample subjects (common German Grundschule subjects)
+- 40 timeslots (5 days × 8 periods including breaks)
+- Sample schedule entries for class 1a (demonstrating A/B weeks)
 
 ## API Endpoints
 
@@ -244,6 +248,46 @@ All endpoints are versioned under `/api/v1/`
 - `PUT /api/v1/classes/{id}` - Update class
   - Body: Any fields to update
 - `DELETE /api/v1/classes/{id}` - Delete class
+
+### Subject Management
+
+- `GET /api/v1/subjects` - List all subjects
+  - Query params: `skip` (offset), `limit` (max results)
+- `GET /api/v1/subjects/{id}` - Get specific subject
+- `POST /api/v1/subjects` - Create new subject
+  - Body: `{name, code, color}`
+- `PUT /api/v1/subjects/{id}` - Update subject
+  - Body: Any fields to update
+- `DELETE /api/v1/subjects/{id}` - Delete subject
+
+### TimeSlot Management
+
+- `GET /api/v1/timeslots` - List all timeslots (ordered by day, period)
+  - Query params: `skip` (offset), `limit` (max results)
+- `GET /api/v1/timeslots/{id}` - Get specific timeslot
+- `POST /api/v1/timeslots` - Create new timeslot
+  - Body: `{day, period, start_time, end_time, is_break}`
+- `PUT /api/v1/timeslots/{id}` - Update timeslot
+  - Body: Any fields to update
+- `DELETE /api/v1/timeslots/{id}` - Delete timeslot
+- `POST /api/v1/timeslots/generate-default` - Generate standard weekly schedule
+
+### Schedule Management
+
+- `GET /api/v1/schedule` - List all schedule entries
+  - Query params: `week_type`, `day`, `include_breaks`
+- `GET /api/v1/schedule/{id}` - Get specific schedule entry
+- `POST /api/v1/schedule` - Create new schedule entry
+  - Body: `{class_id, teacher_id, subject_id, timeslot_id, room, week_type}`
+- `PUT /api/v1/schedule/{id}` - Update schedule entry
+  - Body: Any fields to update
+- `DELETE /api/v1/schedule/{id}` - Delete schedule entry
+- `POST /api/v1/schedule/bulk` - Create multiple entries at once
+- `GET /api/v1/schedule/class/{class_id}` - Get schedule for a class
+- `GET /api/v1/schedule/teacher/{teacher_id}` - Get schedule for a teacher
+- `GET /api/v1/schedule/room/{room}` - Get schedule for a room
+- `POST /api/v1/schedule/validate` - Validate schedule for conflicts
+- `GET /api/v1/schedule/conflicts` - List all conflicts in current schedule
 
 ### Coming Soon
 

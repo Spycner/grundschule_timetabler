@@ -145,8 +145,9 @@ def test_create_teacher():
 - **Class model** with full CRUD operations (TDD approach)
 - **Subject model** with full CRUD operations (TDD approach)
 - **TimeSlot model** with schedule grid management (TDD approach)
+- **Schedule model** with comprehensive conflict detection (TDD approach)
 - **Alembic migrations** for database management
-- **60 comprehensive tests** total (15 Teacher, 15 Class, 14 Subject, 13 TimeSlot, 3 Health)
+- **74 comprehensive tests** total (15 Teacher, 15 Class, 14 Subject, 13 TimeSlot, 14 Schedule, 3 Health)
 - **Docker & Docker Compose** configuration (with Valkey instead of Redis)
 - **GitHub Actions CI/CD** pipeline with comprehensive checks
 - **Development data seeders** for teachers, classes, subjects, and timeslots (40 slots: 5 days × 8 periods)
@@ -154,13 +155,13 @@ def test_create_teacher():
 ### Current Phase: MVP Foundation (Simplified Approach)
 Focus: Get a working prototype for testing with real users (Hesse pre-school contacts)
 
-#### Phase 1: Basic Entities & CRUD (Current)
-- Simple Teacher model (name, email, max_hours, part_time status)
-- Simple Class model (name, grade, size, home_room)
+#### Phase 1: Basic Entities & CRUD (✅ Completed)
+- Simple Teacher model (name, email, max_hours, part_time status) ✅
+- Simple Class model (name, grade, size, home_room) ✅
 - Simple Subject model (name, code, color for UI) ✅
 - Basic TimeSlot model (day, period, times) ✅
-- Manual Schedule creation (link entities together)
-- Conflict detection (no double bookings)
+- Manual Schedule creation (link entities together) ✅
+- Conflict detection (no double bookings) ✅
 
 #### Phase 2: User Testing & Feedback (Next 2 weeks)
 - Basic web UI for schedule creation
@@ -320,10 +321,21 @@ docker-compose up -d
 - `PUT /api/v1/timeslots/{id}` - Update timeslot
 - `DELETE /api/v1/timeslots/{id}` - Delete timeslot
 - `POST /api/v1/timeslots/generate-default` - Generate standard weekly schedule
+- `GET /api/v1/schedule` - List all schedules with filters
+- `GET /api/v1/schedule/{id}` - Get specific schedule entry
+- `POST /api/v1/schedule` - Create new schedule entry
+- `PUT /api/v1/schedule/{id}` - Update schedule entry
+- `DELETE /api/v1/schedule/{id}` - Delete schedule entry
+- `GET /api/v1/schedule/class/{id}` - Get schedule by class
+- `GET /api/v1/schedule/teacher/{id}` - Get schedule by teacher
+- `GET /api/v1/schedule/room/{room}` - Get schedule by room
+- `POST /api/v1/schedule/validate` - Validate for conflicts
+- `GET /api/v1/schedule/conflicts` - List all conflicts
+- `POST /api/v1/schedule/bulk` - Create multiple entries
 
 ### Database Management
 - **Alembic Migrations**: Database schema is now managed via migrations
-- **Current Migration**: `d2943aff3428_add_timeslot_model`
+- **Current Migration**: `4360045a52c4_add_schedule_model`
 - **Apply Migrations**: Run `make migrate-up` before starting the server
 - **Create Migrations**: Use `make migrate-create name="description"` for schema changes
 - **Important**: All models must be imported in `src/models/__init__.py` for Alembic to detect them
@@ -333,9 +345,29 @@ docker-compose up -d
 2. ~~Create simple Class model with basic CRUD (TDD)~~ ✅
 3. ~~Create simple Subject model with basic CRUD (TDD)~~ ✅
 4. ~~Create TimeSlot model for schedule grid (TDD)~~ ✅
-5. Create Schedule model to link entities (TDD)
-6. Add conflict detection for double bookings
-7. Build minimal UI for manual schedule creation
+5. ~~Create Schedule model to link entities (TDD)~~ ✅
+6. ~~Add conflict detection for double bookings~~ ✅
+
+### Backend Features Roadmap
+The following backend features are planned to complete the MVP:
+
+#### High Priority
+- **Teacher Availability Model** - Track when teachers can teach (part-time, blocked periods)
+- **Teacher-Subject Assignment** - Manage qualifications and teaching assignments
+- **Basic Scheduling Algorithm** - Automatic timetable generation with constraint solving
+
+#### Medium Priority  
+- **Room Requirements** - Room features, capacity, and subject requirements
+- **Import Functionality** - Load data from Excel/CSV files
+- **Export Functionality** - Generate PDFs, Excel, and iCal exports
+- **Schedule Templates** - Save and reuse successful timetable patterns
+- **Validation Rules** - Ensure compliance with educational regulations
+
+#### Low Priority
+- **Preference System** - Handle scheduling preferences as soft constraints
+- **Substitute Management** - Handle teacher absences and find substitutes
+
+See `/tasks/backlog/` for detailed task specifications.
 
 ### Session Continuity
 Tasks are defined in `/tasks/backlog/` directory. In a new session, you can:

@@ -6,9 +6,11 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from src.models.class_ import Class
+from src.models.schedule import Schedule
 from src.models.subject import Subject
 from src.models.teacher import Teacher
 from src.models.timeslot import TimeSlot
+from src.seeders.schedule import seed_schedule
 from src.seeders.timeslot_seeder import seed_timeslots
 
 logger = logging.getLogger(__name__)
@@ -52,7 +54,10 @@ class DatabaseSeeder:
             stats["timeslots"] = self.db.query(TimeSlot).count()
             logger.info(f"Seeded {stats['timeslots']} timeslots")
 
-            # TODO: Implement schedule seeding when Schedule model is created
+            # Seed schedule entries
+            schedule_count = seed_schedule(self.db)
+            stats["schedules"] = schedule_count
+            logger.info(f"Seeded {schedule_count} schedule entries")
 
             self.db.commit()
             logger.info("Database seeding completed successfully")
@@ -242,7 +247,7 @@ class DatabaseSeeder:
             },
             {
                 "name": "Sport",
-                "code": "SPO",
+                "code": "SP",
                 "color": "#16A34A",  # Green
             },
             {
@@ -293,7 +298,8 @@ class DatabaseSeeder:
 
         try:
             # Clear in reverse order of dependencies
-            # TODO: Clear schedules when Schedule model is implemented
+            # Clear schedules first (depends on everything)
+            stats["schedules"] = self.db.query(Schedule).delete()
 
             # Clear timeslots
             stats["timeslots"] = self.db.query(TimeSlot).delete()
