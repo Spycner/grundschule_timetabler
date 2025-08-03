@@ -230,6 +230,10 @@ make seed            # Seed development data
 make seed-clear      # Clear and reseed database
 make seed-clear-only # Clear all seeded data
 
+# Algorithm testing:
+uv run pytest tests/test_scheduling_algorithm.py -v  # Test core algorithm
+uv run pytest tests/test_scheduling_performance.py -v  # Test algorithm performance
+
 # Docker commands:
 make docker-build    # Build Docker images
 make docker-up       # Start all services
@@ -364,6 +368,9 @@ docker-compose up -d
 - `POST /api/v1/schedule/validate` - Validate for conflicts (including qualifications & availability)
 - `GET /api/v1/schedule/conflicts` - List all conflicts
 - `POST /api/v1/schedule/bulk` - Create multiple entries
+- `POST /api/v1/schedule/generate` - Generate complete schedule using OR-Tools algorithm
+- `POST /api/v1/schedule/optimize` - Optimize existing schedule while preserving assignments
+- `GET /api/v1/schedule/statistics` - Get comprehensive schedule statistics and quality metrics
 
 ### Database Management
 - **Alembic Migrations**: Database schema is now managed via migrations
@@ -372,13 +379,36 @@ docker-compose up -d
 - **Create Migrations**: Use `make migrate-create name="description"` for schema changes
 - **Important**: All models must be imported in `src/models/__init__.py` for Alembic to detect them
 
-### Immediate Next Steps (MVP Focus)
+### Immediate Next Steps (MVP Focus) - ✅ COMPLETED
 1. ~~Create simple Teacher model with basic CRUD (TDD)~~ ✅
 2. ~~Create simple Class model with basic CRUD (TDD)~~ ✅
 3. ~~Create simple Subject model with basic CRUD (TDD)~~ ✅
 4. ~~Create TimeSlot model for schedule grid (TDD)~~ ✅
 5. ~~Create Schedule model to link entities (TDD)~~ ✅
 6. ~~Add conflict detection for double bookings~~ ✅
+7. ~~Implement OR-Tools CP-SAT scheduling algorithm~~ ✅
+
+### Scheduling Algorithm Implementation ✅
+The system now includes a fully functional scheduling algorithm using Google's OR-Tools CP-SAT solver:
+
+**Key Features:**
+- **Constraint Satisfaction**: Automatically resolves teacher/class/room conflicts
+- **German School Rules**: Implements Grundschule-specific constraints (daily hour limits, break periods, part-time teachers)
+- **Teacher Qualifications**: Respects PRIMARY/SECONDARY/SUBSTITUTE qualification levels
+- **Teacher Availability**: Honors AVAILABLE/BLOCKED/PREFERRED time preferences
+- **Quality Metrics**: Comprehensive scoring system (0-100%) based on constraint satisfaction
+- **Performance**: Generates valid schedules in seconds for typical Grundschule size
+
+**API Endpoints:**
+- Generate complete schedules from scratch with `POST /api/v1/schedule/generate`
+- Optimize existing schedules with `POST /api/v1/schedule/optimize`
+- Validate solutions with comprehensive metrics via `GET /api/v1/schedule/statistics`
+
+**Test Coverage:**
+- 104 comprehensive tests covering all algorithm components
+- Performance benchmarks with realistic seed data
+- Constraint validation and conflict detection
+- Quality score calculation and optimization
 
 ### Backend Features Roadmap
 The following backend features are planned to complete the MVP:
@@ -386,7 +416,7 @@ The following backend features are planned to complete the MVP:
 #### High Priority
 - ✅ **Teacher Availability Model** - Track when teachers can teach (part-time, blocked periods)
 - ✅ **Teacher-Subject Assignment** - Manage qualifications and teaching assignments
-- **Basic Scheduling Algorithm** - Automatic timetable generation with constraint solving
+- ✅ **Basic Scheduling Algorithm** - Automatic timetable generation with OR-Tools CP-SAT constraint solving
 
 #### Medium Priority  
 - **Room Requirements** - Room features, capacity, and subject requirements

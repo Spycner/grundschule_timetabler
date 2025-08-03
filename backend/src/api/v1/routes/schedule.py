@@ -7,8 +7,12 @@ from src.models.database import get_db
 from src.schemas.schedule import (
     ConflictResponse,
     ScheduleCreate,
+    ScheduleGenerationRequest,
+    ScheduleOptimizationRequest,
     ScheduleResponse,
+    ScheduleStatisticsResponse,
     ScheduleUpdate,
+    SchedulingSolutionResponse,
 )
 from src.services.schedule import ScheduleService
 
@@ -255,4 +259,83 @@ def create_bulk_schedules(
             ) from e
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        ) from e
+
+
+# Schedule generation endpoints
+@router.post("/generate", response_model=SchedulingSolutionResponse)
+def generate_schedule(
+    request: ScheduleGenerationRequest, db: Session = Depends(get_db)
+) -> SchedulingSolutionResponse:
+    """Generate a complete schedule using the scheduling algorithm."""
+    try:
+        solution = ScheduleService.generate_schedule(
+            db=db,
+            preserve_existing=request.preserve_existing,
+            time_limit_seconds=request.time_limit_seconds,
+            clear_existing=request.clear_existing,
+        )
+
+        return SchedulingSolutionResponse(
+            schedules=solution.schedules,
+            quality_score=solution.quality_score,
+            generation_time=solution.generation_time,
+            satisfied_constraints=solution.satisfied_constraints,
+            violated_constraints=solution.violated_constraints,
+            objective_value=solution.objective_value,
+            is_feasible=solution.is_feasible,
+            schedule_count=solution.schedule_count,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Schedule generation failed: {e!s}",
+        ) from e
+
+
+@router.post("/optimize", response_model=SchedulingSolutionResponse)
+def optimize_schedule(
+    request: ScheduleOptimizationRequest, db: Session = Depends(get_db)
+) -> SchedulingSolutionResponse:
+    """Optimize the existing schedule while preserving all current assignments."""
+    try:
+        solution = ScheduleService.optimize_existing_schedule(
+            db=db,
+            time_limit_seconds=request.time_limit_seconds,
+        )
+
+        return SchedulingSolutionResponse(
+            schedules=solution.schedules,
+            quality_score=solution.quality_score,
+            generation_time=solution.generation_time,
+            satisfied_constraints=solution.satisfied_constraints,
+            violated_constraints=solution.violated_constraints,
+            objective_value=solution.objective_value,
+            is_feasible=solution.is_feasible,
+            schedule_count=solution.schedule_count,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Schedule optimization failed: {e!s}",
+        ) from e
+
+
+@router.get("/statistics", response_model=ScheduleStatisticsResponse)
+def get_schedule_statistics(
+    db: Session = Depends(get_db),
+) -> ScheduleStatisticsResponse:
+    """Get statistics about the current schedule."""
+    try:
+        stats = ScheduleService.get_schedule_statistics(db)
+        return ScheduleStatisticsResponse(
+            total_schedules=stats["total_schedules"],
+            schedules_by_teacher=stats["schedules_by_teacher"],
+            schedules_by_class=stats["schedules_by_class"],
+            schedules_by_subject=stats["schedules_by_subject"],
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get schedule statistics: {e!s}",
         ) from e

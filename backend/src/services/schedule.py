@@ -1,16 +1,29 @@
 """Schedule service for business logic and conflict detection."""
 
 from datetime import UTC, datetime
+from typing import TypedDict
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from src.models.schedule import Schedule
+from src.models.subject import Subject
+from src.models.teacher import Teacher
 from src.models.teacher_availability import AvailabilityType
 from src.models.timeslot import TimeSlot
 from src.schemas.schedule import ConflictDetail, ScheduleCreate, ScheduleUpdate
+from src.services.scheduling_algorithm import SchedulingAlgorithm, SchedulingSolution
 from src.services.teacher_availability import TeacherAvailabilityService
 from src.services.teacher_subject import TeacherSubjectService
+
+
+class ScheduleStatistics(TypedDict):
+    """Type definition for schedule statistics."""
+
+    total_schedules: int
+    schedules_by_teacher: dict[str, int]
+    schedules_by_class: dict[str, int]
+    schedules_by_subject: dict[str, int]
 
 
 class ScheduleService:
@@ -429,3 +442,453 @@ class ScheduleService:
                 conflicts_found.append((schedule, conflicts))
 
         return conflicts_found
+
+    @staticmethod
+    def generate_schedule(
+        db: Session,
+        preserve_existing: bool = True,
+        time_limit_seconds: int = 60,
+        clear_existing: bool = False,
+    ) -> SchedulingSolution:
+        """
+        Generate a complete schedule using the scheduling algorithm.
+
+        Args:
+            db: Database session
+            preserve_existing: If True, keep existing schedule entries as fixed assignments
+            time_limit_seconds: Maximum time to spend solving
+            clear_existing: If True, delete all existing schedules before generating
+
+        Returns:
+            SchedulingSolution with the generated schedule and metadata
+        """
+        # Clear existing schedules if requested
+        if clear_existing:
+            db.query(Schedule).delete()
+            db.commit()
+
+        # Get existing schedules to preserve
+        fixed_assignments = []
+        if preserve_existing and not clear_existing:
+            fixed_assignments = db.query(Schedule).all()
+
+        # Initialize and run the scheduling algorithm
+        algorithm = SchedulingAlgorithm(db)
+        solution = algorithm.solve(
+            fixed_assignments=fixed_assignments, time_limit_seconds=time_limit_seconds
+        )
+
+        # If solution is feasible, save the new schedules to database
+        if solution.is_feasible and solution.schedules:
+            created_schedules = []
+            for schedule_create in solution.schedules:
+                # Check if this schedule already exists (to avoid duplicates)
+                existing = (
+                    db.query(Schedule)
+                    .filter(
+                        Schedule.teacher_id == schedule_create.teacher_id,
+                        Schedule.class_id == schedule_create.class_id,
+                        Schedule.subject_id == schedule_create.subject_id,
+                        Schedule.timeslot_id == schedule_create.timeslot_id,
+                        Schedule.week_type == schedule_create.week_type,
+                    )
+                    .first()
+                )
+
+                if not existing:
+                    # Create new schedule entry
+                    db_schedule = Schedule(**schedule_create.model_dump())
+                    db.add(db_schedule)
+                    created_schedules.append(db_schedule)
+
+            try:
+                db.commit()
+                # Refresh created schedules with relationships
+                for db_schedule in created_schedules:
+                    db.refresh(
+                        db_schedule, ["class_", "teacher", "subject", "timeslot"]
+                    )
+            except IntegrityError as e:
+                db.rollback()
+                raise ValueError("Failed to save generated schedule") from e
+
+        return solution
+
+    @staticmethod
+    def optimize_existing_schedule(
+        db: Session,
+        time_limit_seconds: int = 60,
+    ) -> SchedulingSolution:
+        """
+        Optimize the existing schedule while preserving all current assignments.
+
+        This method is useful for improving the quality of a manually created schedule
+        or for adding additional lessons to an existing schedule.
+
+        Args:
+            db: Database session
+            time_limit_seconds: Maximum time to spend optimizing
+
+        Returns:
+            SchedulingSolution with optimization results
+        """
+        # Get all existing schedules as fixed assignments
+        existing_schedules = db.query(Schedule).all()
+
+        # Run the algorithm with all existing schedules as fixed
+        algorithm = SchedulingAlgorithm(db)
+        return algorithm.solve(
+            fixed_assignments=existing_schedules, time_limit_seconds=time_limit_seconds
+        )
+
+    @staticmethod
+    def validate_generated_schedule(
+        db: Session, solution: SchedulingSolution
+    ) -> list[ConflictDetail]:
+        """
+        Validate a generated schedule solution for any remaining conflicts.
+
+        Args:
+            db: Database session
+            solution: The scheduling solution to validate
+
+        Returns:
+            List of any conflicts found
+        """
+        all_conflicts = []
+
+        for schedule_create in solution.schedules:
+            conflicts = ScheduleService.validate_schedule(db, schedule_create)
+            all_conflicts.extend(conflicts)
+
+        return all_conflicts
+
+    @staticmethod
+    def get_schedule_statistics(db: Session) -> ScheduleStatistics:
+        """
+        Get statistics about the current schedule.
+
+        Returns:
+            Dictionary with various schedule statistics
+        """
+        total_schedules = db.query(Schedule).count()
+
+        # Count by teacher
+        teacher_counts = {}
+        teacher_schedules = (
+            db.query(Schedule).options(joinedload(Schedule.teacher)).all()
+        )
+        for schedule in teacher_schedules:
+            teacher_name = f"{schedule.teacher.first_name} {schedule.teacher.last_name}"
+            teacher_counts[teacher_name] = teacher_counts.get(teacher_name, 0) + 1
+
+        # Count by class
+        class_counts = {}
+        class_schedules = db.query(Schedule).options(joinedload(Schedule.class_)).all()
+        for schedule in class_schedules:
+            class_name = schedule.class_.name
+            class_counts[class_name] = class_counts.get(class_name, 0) + 1
+
+        # Count by subject
+        subject_counts = {}
+        subject_schedules = (
+            db.query(Schedule).options(joinedload(Schedule.subject)).all()
+        )
+        for schedule in subject_schedules:
+            subject_name = schedule.subject.name
+            subject_counts[subject_name] = subject_counts.get(subject_name, 0) + 1
+
+        return {
+            "total_schedules": total_schedules,
+            "schedules_by_teacher": teacher_counts,
+            "schedules_by_class": class_counts,
+            "schedules_by_subject": subject_counts,
+        }
+
+    @staticmethod
+    def generate_partial_schedule(
+        db: Session,
+        target_classes: list[int] | None = None,
+        target_subjects: list[int] | None = None,
+        target_days: list[int] | None = None,
+        preserve_existing: bool = True,
+        time_limit_seconds: int = 60,
+    ) -> SchedulingSolution:
+        """
+        Generate schedule for specific classes, subjects, or days only.
+
+        This allows for incremental schedule building where you can focus
+        on scheduling specific parts of the timetable.
+
+        Args:
+            db: Database session
+            target_classes: List of class IDs to schedule (None = all classes)
+            target_subjects: List of subject IDs to schedule (None = all subjects)
+            target_days: List of days to schedule (1-5, None = all days)
+            preserve_existing: Keep existing schedule entries
+            time_limit_seconds: Maximum solving time
+
+        Returns:
+            SchedulingSolution with partial schedule results
+        """
+        # Get existing schedules to preserve
+        fixed_assignments = []
+        if preserve_existing:
+            query = db.query(Schedule)
+
+            # Filter out existing entries that conflict with our targets
+            if target_classes or target_subjects or target_days:
+                from src.models.timeslot import TimeSlot
+
+                # Build filter conditions
+                filters = []
+
+                if target_classes:
+                    filters.append(~Schedule.class_id.in_(target_classes))
+
+                if target_subjects:
+                    filters.append(~Schedule.subject_id.in_(target_subjects))
+
+                if target_days:
+                    # Join with TimeSlot to filter by day
+                    query = query.join(TimeSlot)
+                    filters.append(~TimeSlot.day.in_(target_days))
+
+                if filters:
+                    from sqlalchemy import and_
+
+                    # Keep existing schedules that don't match our targets
+                    query = query.filter(and_(*filters))
+
+            fixed_assignments = query.all()
+
+        # Create a constrained algorithm that only considers target entities
+        algorithm = SchedulingAlgorithm(db)
+
+        # Override the load_data method to filter for our targets
+        algorithm.load_data()
+
+        if target_classes:
+            algorithm.classes = [c for c in algorithm.classes if c.id in target_classes]
+
+        if target_subjects:
+            algorithm.subjects = [
+                s for s in algorithm.subjects if s.id in target_subjects
+            ]
+
+        if target_days:
+            algorithm.timeslots = [
+                ts for ts in algorithm.timeslots if ts.day in target_days
+            ]
+
+        # Solve with constraints
+        solution = algorithm.solve(
+            fixed_assignments=fixed_assignments, time_limit_seconds=time_limit_seconds
+        )
+
+        # Save new schedules if feasible
+        if solution.is_feasible and solution.schedules:
+            created_schedules = []
+            for schedule_create in solution.schedules:
+                # Check if this schedule already exists
+                existing = (
+                    db.query(Schedule)
+                    .filter(
+                        Schedule.teacher_id == schedule_create.teacher_id,
+                        Schedule.class_id == schedule_create.class_id,
+                        Schedule.subject_id == schedule_create.subject_id,
+                        Schedule.timeslot_id == schedule_create.timeslot_id,
+                        Schedule.week_type == schedule_create.week_type,
+                    )
+                    .first()
+                )
+
+                if not existing:
+                    db_schedule = Schedule(**schedule_create.model_dump())
+                    db.add(db_schedule)
+                    created_schedules.append(db_schedule)
+
+            try:
+                db.commit()
+                for db_schedule in created_schedules:
+                    db.refresh(
+                        db_schedule, ["class_", "teacher", "subject", "timeslot"]
+                    )
+            except IntegrityError as e:
+                db.rollback()
+                raise ValueError("Failed to save partial schedule") from e
+
+        return solution
+
+    @staticmethod
+    def create_schedule_template(
+        db: Session,
+        template_name: str,
+        description: str | None = None,
+        class_ids: list[int] | None = None,
+    ) -> dict[str, object]:
+        """
+        Create a schedule template from existing schedule entries.
+
+        Templates store the pattern of schedules that can be reapplied
+        to different classes or time periods.
+
+        Args:
+            db: Database session
+            template_name: Name for the template
+            description: Optional description
+            class_ids: Specific classes to include (None = all)
+
+        Returns:
+            Dictionary with template data
+        """
+        query = db.query(Schedule).options(
+            joinedload(Schedule.class_),
+            joinedload(Schedule.teacher),
+            joinedload(Schedule.subject),
+            joinedload(Schedule.timeslot),
+        )
+
+        if class_ids:
+            query = query.filter(Schedule.class_id.in_(class_ids))
+
+        schedules = query.all()
+
+        if not schedules:
+            raise ValueError("No schedules found to create template")
+
+        # Extract template entries
+        template_entries = []
+        for schedule in schedules:
+            entry = {
+                "class_name": schedule.class_.name,
+                "subject_name": schedule.subject.name,
+                "teacher_name": f"{schedule.teacher.first_name} {schedule.teacher.last_name}",
+                "day": schedule.timeslot.day,
+                "period": schedule.timeslot.period,
+                "week_type": schedule.week_type,
+                "room": schedule.room,
+            }
+            template_entries.append(entry)
+
+        # Calculate grade levels
+        grade_levels = list({schedule.class_.grade for schedule in schedules})
+
+        return {
+            "name": template_name,
+            "description": description
+            or f"Template created from {len(schedules)} schedule entries",
+            "grade_levels": grade_levels,
+            "entries": template_entries,
+            "created_from_classes": [schedule.class_.name for schedule in schedules],
+            "entry_count": len(template_entries),
+        }
+
+    @staticmethod
+    def apply_schedule_template(
+        db: Session,
+        template_data: dict[str, object],
+        class_mappings: dict[str, int],
+        teacher_preferences: dict[str, int] | None = None,
+        override_existing: bool = False,
+    ) -> list[Schedule]:
+        """
+        Apply a schedule template to create new schedule entries.
+
+        Args:
+            db: Database session
+            template_data: Template data from create_schedule_template
+            class_mappings: Map template class names to actual class IDs
+            teacher_preferences: Optional teacher preferences for assignments
+            override_existing: Whether to replace existing schedule entries
+
+        Returns:
+            List of created schedule entries
+        """
+        teacher_preferences = teacher_preferences or {}
+        created_schedules = []
+
+        # Build lookup maps
+        teachers_by_name = {}
+        for teacher in db.query(Teacher).all():
+            full_name = f"{teacher.first_name} {teacher.last_name}"
+            teachers_by_name[full_name] = teacher
+
+        subjects_by_name = {s.name: s for s in db.query(Subject).all()}
+
+        # Get timeslots for day/period lookup
+        timeslots_map = {}
+        for ts in db.query(TimeSlot).all():
+            timeslots_map[(ts.day, ts.period)] = ts
+
+        entries = template_data.get("entries", [])
+        if not isinstance(entries, list):
+            entries = []
+        for entry in entries:
+            # Map template class name to actual class ID
+            class_id = class_mappings.get(entry["class_name"])
+            if not class_id:
+                continue  # Skip if class mapping not provided
+
+            # Find subject
+            subject = subjects_by_name.get(entry["subject_name"])
+            if not subject:
+                continue  # Skip if subject not found
+
+            # Find timeslot
+            timeslot = timeslots_map.get((entry["day"], entry["period"]))
+            if not timeslot or timeslot.is_break:
+                continue  # Skip breaks and invalid timeslots
+
+            # Find teacher (prefer user preference, fallback to template)
+            teacher = None
+            if entry["teacher_name"] in teacher_preferences:
+                teacher_id = teacher_preferences[entry["teacher_name"]]
+                teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()
+
+            if not teacher:
+                teacher = teachers_by_name.get(entry["teacher_name"])
+
+            if not teacher:
+                continue  # Skip if no suitable teacher found
+
+            # Check if schedule already exists
+            existing = (
+                db.query(Schedule)
+                .filter(
+                    Schedule.class_id == class_id,
+                    Schedule.timeslot_id == timeslot.id,
+                    Schedule.week_type == entry.get("week_type", "ALL"),
+                )
+                .first()
+            )
+
+            if existing and not override_existing:
+                continue  # Skip if exists and not overriding
+
+            if existing and override_existing:
+                db.delete(existing)
+
+            # Create new schedule entry
+            new_schedule = Schedule(
+                class_id=class_id,
+                teacher_id=teacher.id,
+                subject_id=subject.id,
+                timeslot_id=timeslot.id,
+                room=entry.get("room"),
+                week_type=entry.get("week_type", "ALL"),
+            )
+
+            db.add(new_schedule)
+            created_schedules.append(new_schedule)
+
+        try:
+            db.commit()
+            # Refresh with relationships
+            for schedule in created_schedules:
+                db.refresh(schedule, ["class_", "teacher", "subject", "timeslot"])
+        except IntegrityError as e:
+            db.rollback()
+            raise ValueError("Failed to apply template - conflicts detected") from e
+
+        return created_schedules
