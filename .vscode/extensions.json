@@ -4,6 +4,7 @@
     "ms-python.python",
     "ms-python.vscode-pylance",
     "charliermarsh.ruff",
+    "astral.ty",
     
     // General development
     "editorconfig.editorconfig",
