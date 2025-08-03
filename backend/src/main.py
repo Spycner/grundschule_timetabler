@@ -1,7 +1,7 @@
 """Main FastAPI application."""
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,13 +20,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print(f"Starting {settings.app_name} v{settings.app_version}")
     print(f"Environment: {settings.environment}")
     print(f"Database: {settings.database_url}")
-    
+
     # Initialize database
     init_db()
     print("Database initialized")
-    
+
     yield
-    
+
     # Shutdown
     print("Shutting down...")
 

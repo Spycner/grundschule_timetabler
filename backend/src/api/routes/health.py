@@ -1,6 +1,6 @@
 """Health check endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -19,7 +19,7 @@ async def health_check() -> dict[str, Any]:
     """Basic health check endpoint."""
     return {
         "status": "healthy",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "service": settings.app_name,
         "version": settings.app_version,
         "environment": settings.environment,
@@ -34,11 +34,11 @@ async def readiness_check(db: Session = Depends(get_db)) -> dict[str, Any]:
         result = db.execute(text("SELECT 1"))
         db_status = "connected" if result.scalar() == 1 else "error"
     except Exception as e:
-        db_status = f"error: {str(e)}"
+        db_status = f"error: {e!s}"
 
     return {
         "status": "ready" if db_status == "connected" else "not ready",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "service": settings.app_name,
         "version": settings.app_version,
         "environment": settings.environment,
