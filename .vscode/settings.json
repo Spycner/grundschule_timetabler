@@ -1,0 +1,59 @@
+{
+  // Python settings
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  
+  // Ruff settings
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  
+  // File associations
+  "files.associations": {
+    "*.toml": "toml",
+    "*.md": "markdown"
+  },
+  
+  // Exclude patterns
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/node_modules": true,
+    "backend/.venv": true
+  },
+  
+  // Search exclude
+  "search.exclude": {
+    "**/node_modules": true,
+    "backend/.venv": true,
+    "**/__pycache__": true,
+    "**/uv.lock": true
+  },
+  
+  // Editor settings
+  "editor.rulers": [88],
+  "editor.formatOnSave": true,
+  
+  // Terminal settings
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}/backend/src"
+  },
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/backend/src"
+  },
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "${workspaceFolder}/backend/src"
+  },
+  
+  // Test settings
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": [
+    "backend/tests"
+  ]
+}
