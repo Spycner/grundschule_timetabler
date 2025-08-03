@@ -13,16 +13,18 @@ Primary users: Principals and administrative staff at German Grundschule
 
 ## Tech Stack
 
-### Backend
-- **Language**: Python
+### Backend (✅ Implemented)
+- **Language**: Python 3.12
 - **Package Manager**: uv (modern Python package manager)
 - **Framework**: FastAPI (for REST API)
 - **Database**: PostgreSQL (for production), SQLite (for development)
-- **ORM**: SQLAlchemy
-- **Testing**: pytest
+- **ORM**: SQLAlchemy 2.0
+- **Testing**: pytest with pytest-asyncio
 - **Code Quality**: ruff (formatting and linting), ty (type checking from Astral)
+- **API Testing**: httpx
+- **Migrations**: Alembic
 
-### Frontend
+### Frontend (📋 Planned)
 - **Language**: TypeScript
 - **Framework**: React with Vite (or Next.js - TBD)
 - **Styling**: Tailwind CSS
@@ -100,12 +102,22 @@ Primary users: Principals and administrative staff at German Grundschule
 - API documentation via OpenAPI/Swagger
 - Domain terms documented with translations
 
-## Project Phases
+## Project Status
 
-### Phase 1: Foundation (Current)
-- Project setup and documentation
-- Basic domain modeling
-- Simple CRUD operations
+### Completed ✅
+- Comprehensive project documentation
+- Requirements specification (functional and non-functional)
+- Task management system setup
+- Backend infrastructure with FastAPI
+- Development tooling (ruff, ty, pytest)
+- VS Code integration
+- Health check endpoints
+- Test structure
+
+### Current Phase: Foundation
+- Basic domain modeling (Next)
+- Simple CRUD operations for core entities
+- Database schema design
 
 ### Phase 2: Core Scheduling
 - Timetable creation algorithm
@@ -148,12 +160,21 @@ Primary users: Principals and administrative staff at German Grundschule
 ### Backend
 ```bash
 cd backend
-uv pip install -e .
-uv run pytest
-uv run ruff check .
-uv run ruff format .
-uv run ty check
-uv run python -m src.main
+make install          # Install dependencies
+make dev             # Run development server
+make test            # Run tests
+make check           # Run all checks (lint, format, type)
+make typecheck       # Run ty type checker
+make format          # Format code with ruff
+make lint            # Lint code with ruff
+
+# Or manually:
+uv sync              # Install dependencies
+uv run uvicorn src.main:app --reload  # Run server
+uv run pytest        # Run tests
+uv run ruff check .  # Lint
+uv run ruff format . # Format
+uvx --native-tls ty check  # Type check
 ```
 
 ### Frontend
@@ -167,10 +188,32 @@ npm test
 
 ## Key Files and Directories
 - `/requirements/` - Detailed project requirements
-- `/tasks/` - Task management system
-- `/backend/` - Python backend application
-- `/frontend/` - TypeScript frontend application
-- `/docs/` - Additional documentation
+- `/tasks/` - Task management system (backlog, doing, completed)
+- `/backend/` - Python backend application (FastAPI)
+- `/frontend/` - TypeScript frontend application (not yet implemented)
+- `/development-docs/` - Development reference documentation (uv, ty)
+- `/.vscode/` - VS Code workspace configuration
+
+## Current Working State
+
+### Backend API
+- **URL**: http://localhost:8000
+- **Docs**: http://localhost:8000/docs (Swagger UI)
+- **ReDoc**: http://localhost:8000/redoc
+- **Health Check**: http://localhost:8000/api/health
+- **Readiness**: http://localhost:8000/api/health/ready
+
+### Available Endpoints
+- `GET /` - Welcome message
+- `GET /api/health` - Basic health check
+- `GET /api/health/ready` - Database connectivity check
+
+### Next Steps
+1. Implement Teacher model and CRUD operations
+2. Implement Class model and CRUD operations
+3. Implement Subject model
+4. Design Room management
+5. Create basic timetable structure
 
 ## Questions to Address
 1. How many schools will this initially support?
@@ -186,3 +229,8 @@ npm test
 - [ruff Documentation](https://github.com/astral-sh/ruff)
 - [ty Documentation](https://github.com/astral-sh/ty)
 - [React + TypeScript Best Practices](https://react-typescript-cheatsheet.netlify.app)
+
+## Project Contact
+- **Author**: Pascal Kraus
+- **Email**: pascal98kraus@gmail.com
+- **Repository**: https://github.com/Spycner/grundschule_timetabler
