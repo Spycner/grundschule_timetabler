@@ -9,8 +9,10 @@ from src.models.class_ import Class
 from src.models.schedule import Schedule
 from src.models.subject import Subject
 from src.models.teacher import Teacher
+from src.models.teacher_subject import TeacherSubject
 from src.models.timeslot import TimeSlot
 from src.seeders.schedule import seed_schedule
+from src.seeders.teacher_subject_seeder import TeacherSubjectSeeder
 from src.seeders.timeslot_seeder import seed_timeslots
 
 logger = logging.getLogger(__name__)
@@ -29,6 +31,7 @@ class DatabaseSeeder:
             "teachers": 0,
             "classes": 0,
             "subjects": 0,
+            "teacher_subjects": 0,
             "timeslots": 0,
             "schedules": 0,
         }
@@ -48,6 +51,13 @@ class DatabaseSeeder:
             subjects = self.seed_subjects()
             stats["subjects"] = len(subjects)
             logger.info(f"Seeded {len(subjects)} subjects")
+
+            # Seed teacher-subject assignments
+            TeacherSubjectSeeder.seed(self.db)
+            stats["teacher_subjects"] = self.db.query(TeacherSubject).count()
+            logger.info(
+                f"Seeded {stats['teacher_subjects']} teacher-subject assignments"
+            )
 
             # Seed timeslots
             seed_timeslots(self.db)
@@ -73,33 +83,33 @@ class DatabaseSeeder:
         teachers_data = [
             {
                 "first_name": "Maria",
-                "last_name": "Müller",
-                "email": "maria.mueller@schule.de",
-                "abbreviation": "MUE",
-                "max_hours_per_week": 28,
-                "is_part_time": False,
-            },
-            {
-                "first_name": "Thomas",
                 "last_name": "Schmidt",
-                "email": "thomas.schmidt@schule.de",
+                "email": "maria.schmidt@schule.de",
                 "abbreviation": "SCH",
                 "max_hours_per_week": 28,
                 "is_part_time": False,
             },
             {
-                "first_name": "Anna",
+                "first_name": "Hans",
                 "last_name": "Weber",
-                "email": "anna.weber@schule.de",
+                "email": "hans.weber@schule.de",
                 "abbreviation": "WEB",
-                "max_hours_per_week": 20,
-                "is_part_time": True,
+                "max_hours_per_week": 28,
+                "is_part_time": False,
             },
             {
-                "first_name": "Michael",
-                "last_name": "Wagner",
-                "email": "michael.wagner@schule.de",
-                "abbreviation": "WAG",
+                "first_name": "Anna",
+                "last_name": "Meyer",
+                "email": "anna.meyer@schule.de",
+                "abbreviation": "MEY",
+                "max_hours_per_week": 28,
+                "is_part_time": False,
+            },
+            {
+                "first_name": "Peter",
+                "last_name": "Müller",
+                "email": "peter.mueller@schule.de",
+                "abbreviation": "MUL",
                 "max_hours_per_week": 28,
                 "is_part_time": False,
             },
@@ -108,30 +118,38 @@ class DatabaseSeeder:
                 "last_name": "Becker",
                 "email": "julia.becker@schule.de",
                 "abbreviation": "BEC",
-                "max_hours_per_week": 15,
-                "is_part_time": True,
-            },
-            {
-                "first_name": "Stefan",
-                "last_name": "Schulz",
-                "email": "stefan.schulz@schule.de",
-                "abbreviation": "SLZ",
                 "max_hours_per_week": 28,
                 "is_part_time": False,
             },
             {
-                "first_name": "Lisa",
-                "last_name": "Hoffmann",
-                "email": "lisa.hoffmann@schule.de",
-                "abbreviation": "HOF",
-                "max_hours_per_week": 24,
-                "is_part_time": True,
+                "first_name": "Thomas",
+                "last_name": "Wagner",
+                "email": "thomas.wagner@schule.de",
+                "abbreviation": "WAG",
+                "max_hours_per_week": 28,
+                "is_part_time": False,
             },
             {
-                "first_name": "Christian",
-                "last_name": "Schäfer",
-                "email": "christian.schaefer@schule.de",
-                "abbreviation": "SHA",
+                "first_name": "Laura",
+                "last_name": "Schmidt",
+                "email": "laura.schmidt@schule.de",
+                "abbreviation": "LSC",
+                "max_hours_per_week": 28,
+                "is_part_time": False,
+            },
+            {
+                "first_name": "Max",
+                "last_name": "Fischer",
+                "email": "max.fischer@schule.de",
+                "abbreviation": "FIS",
+                "max_hours_per_week": 28,
+                "is_part_time": False,
+            },
+            {
+                "first_name": "Sophie",
+                "last_name": "Klein",
+                "email": "sophie.klein@schule.de",
+                "abbreviation": "KLE",
                 "max_hours_per_week": 28,
                 "is_part_time": False,
             },
@@ -270,6 +288,11 @@ class DatabaseSeeder:
                 "code": "ETH",
                 "color": "#06B6D4",  # Cyan
             },
+            {
+                "name": "Werken",
+                "code": "WE",
+                "color": "#A16207",  # Yellow-700
+            },
         ]
 
         subjects = []
@@ -292,6 +315,7 @@ class DatabaseSeeder:
             "teachers": 0,
             "classes": 0,
             "subjects": 0,
+            "teacher_subjects": 0,
             "timeslots": 0,
             "schedules": 0,
         }
@@ -303,6 +327,9 @@ class DatabaseSeeder:
 
             # Clear timeslots
             stats["timeslots"] = self.db.query(TimeSlot).delete()
+
+            # Clear teacher-subject assignments
+            stats["teacher_subjects"] = self.db.query(TeacherSubject).delete()
 
             # Clear subjects
             stats["subjects"] = self.db.query(Subject).delete()

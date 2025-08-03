@@ -531,6 +531,19 @@ class TestScheduleIntegration:
         assert response.status_code == 201, f"Failed to create subject: {response.text}"
         subject_id = response.json()["id"]
 
+        # Create teacher-subject qualification
+        qualification_data = {
+            "subject_id": subject_id,
+            "qualification_level": "PRIMARY",
+            "grades": [1, 2, 3, 4],
+        }
+        response = client.post(
+            f"/api/v1/teachers/{teacher_id}/subjects", json=qualification_data
+        )
+        assert (
+            response.status_code == 201
+        ), f"Failed to create qualification: {response.text}"
+
         # Create a timeslot for testing
         timeslot_data = {
             "day": 1,  # Monday (1-based in API, TimeSLot model uses 1-5)

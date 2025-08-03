@@ -4,6 +4,22 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 
+def create_teacher_subject_qualification(
+    client: TestClient, teacher_id: int, subject_id: int
+):
+    """Helper function to create teacher-subject qualification for tests."""
+    qualification_data = {
+        "subject_id": subject_id,
+        "qualification_level": "PRIMARY",
+        "grades": [1, 2, 3, 4],
+    }
+    response = client.post(
+        f"/api/v1/teachers/{teacher_id}/subjects", json=qualification_data
+    )
+    assert response.status_code == 201
+    return response.json()
+
+
 def test_create_schedule_entry(client: TestClient, db: Session):
     """Test creating a new schedule entry."""
     # First, create necessary entities
@@ -37,6 +53,9 @@ def test_create_schedule_entry(client: TestClient, db: Session):
     subject_response = client.post("/api/v1/subjects", json=subject_data)
     assert subject_response.status_code == 201
     subject_id = subject_response.json()["id"]
+
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
 
     # Generate default timeslots
     timeslot_response = client.post("/api/v1/timeslots/generate-default")
@@ -112,6 +131,9 @@ def test_teacher_conflict_detection(client: TestClient, db: Session):
     timeslots_response = client.get("/api/v1/timeslots")
     timeslots = timeslots_response.json()
     timeslot_id = timeslots[0]["id"]
+
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
 
     # Create first schedule entry
     schedule1_data = {
@@ -192,6 +214,10 @@ def test_class_conflict_detection(client: TestClient, db: Session):
     timeslots = timeslots_response.json()
     timeslot_id = timeslots[0]["id"]
 
+    # Create teacher-subject qualifications
+    create_teacher_subject_qualification(client, teacher1_id, subject1_id)
+    create_teacher_subject_qualification(client, teacher2_id, subject2_id)
+
     # Create first schedule entry
     schedule1_data = {
         "class_id": class_id,
@@ -271,6 +297,10 @@ def test_room_conflict_detection(client: TestClient, db: Session):
     timeslots = timeslots_response.json()
     timeslot_id = timeslots[0]["id"]
 
+    # Create teacher-subject qualifications
+    create_teacher_subject_qualification(client, teacher1_id, subject_id)
+    create_teacher_subject_qualification(client, teacher2_id, subject_id)
+
     # Create first schedule entry
     schedule1_data = {
         "class_id": class1_id,
@@ -324,6 +354,9 @@ def test_break_period_validation(client: TestClient, db: Session):
         json={"name": "Mathematik", "code": "MA", "color": "#2563EB"},
     )
     subject_id = subject_response.json()["id"]
+
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
 
     # Generate timeslots (will include break periods)
     client.post("/api/v1/timeslots/generate-default")
@@ -381,6 +414,9 @@ def test_get_schedule_by_class(client: TestClient, db: Session):
     timeslots = timeslots_response.json()
     timeslot_id = timeslots[0]["id"]
 
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
+
     # Create schedule entry
     schedule_data = {
         "class_id": class_id,
@@ -433,6 +469,9 @@ def test_get_schedule_by_teacher(client: TestClient, db: Session):
     timeslots_response = client.get("/api/v1/timeslots")
     timeslots = timeslots_response.json()
     timeslot_id = timeslots[0]["id"]
+
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
 
     # Create schedule entry
     schedule_data = {
@@ -492,6 +531,10 @@ def test_week_type_scheduling(client: TestClient, db: Session):
     timeslots_response = client.get("/api/v1/timeslots")
     timeslots = timeslots_response.json()
     timeslot_id = timeslots[0]["id"]
+
+    # Create teacher-subject qualifications
+    create_teacher_subject_qualification(client, teacher_id, subject1_id)
+    create_teacher_subject_qualification(client, teacher_id, subject2_id)
 
     # Create A week schedule
     schedule_a_data = {
@@ -559,6 +602,9 @@ def test_bulk_schedule_creation(client: TestClient, db: Session):
     timeslots = timeslots_response.json()
     non_break_slots = [ts for ts in timeslots if not ts["is_break"]][:3]
 
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
+
     # Create bulk schedule data
     bulk_data = [
         {
@@ -611,6 +657,9 @@ def test_validate_schedule_conflicts(client: TestClient, db: Session):
     timeslots_response = client.get("/api/v1/timeslots")
     timeslots = timeslots_response.json()
     timeslot_id = timeslots[0]["id"]
+
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
 
     # Create first schedule entry
     schedule_data = {
@@ -675,6 +724,9 @@ def test_update_schedule_entry(client: TestClient, db: Session):
     timeslot1_id = non_break_slots[0]["id"]
     timeslot2_id = non_break_slots[1]["id"]
 
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
+
     # Create schedule entry
     schedule_data = {
         "class_id": class_id,
@@ -733,6 +785,9 @@ def test_delete_schedule_entry(client: TestClient, db: Session):
     timeslots = timeslots_response.json()
     timeslot_id = timeslots[0]["id"]
 
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
+
     # Create schedule entry
     schedule_data = {
         "class_id": class_id,
@@ -788,6 +843,9 @@ def test_get_room_schedule(client: TestClient, db: Session):
     timeslots = timeslots_response.json()
     timeslot_id = timeslots[0]["id"]
 
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
+
     # Create schedule entry
     schedule_data = {
         "class_id": class_id,
@@ -840,6 +898,9 @@ def test_schedule_query_filters(client: TestClient, db: Session):
     timeslots_response = client.get("/api/v1/timeslots")
     timeslots = timeslots_response.json()
     monday_slot = next(ts for ts in timeslots if ts["day"] == 1 and not ts["is_break"])
+
+    # Create teacher-subject qualification
+    create_teacher_subject_qualification(client, teacher_id, subject_id)
 
     # Create schedule entry for Monday
     schedule_data = {

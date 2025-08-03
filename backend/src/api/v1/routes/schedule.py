@@ -35,6 +35,11 @@ def create_schedule(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Teacher is not available during this period",
             ) from e
+        if "not qualified" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Teacher is not qualified to teach this subject",
+            ) from e
         if "teacher" in error_msg:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -110,6 +115,11 @@ def update_schedule(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Teacher is not available during this period",
+            ) from e
+        if "not qualified" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Teacher is not qualified to teach this subject",
             ) from e
         if "teacher" in error_msg:
             raise HTTPException(
