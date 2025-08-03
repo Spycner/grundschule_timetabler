@@ -6,19 +6,22 @@ High
 ## Created
 2025-08-03
 
+## Completed
+2025-08-03
+
 ## Description
 Configure pre-commit hooks to ensure code quality and consistency before commits. This will automate code formatting, linting, and basic checks to maintain code standards across the project.
 
 ## Acceptance Criteria
-- [ ] Install and configure pre-commit framework
-- [ ] Setup Python hooks (ruff format, ruff check, ty type check)
-- [ ] Setup general hooks (trailing whitespace, end of file, file size)
-- [ ] Setup commit message validation
-- [ ] Configure for both backend and future frontend
-- [ ] Add pre-commit to developer documentation
-- [ ] Test hooks with intentional violations
-- [ ] Update Makefile with pre-commit commands
-- [ ] Add .pre-commit-config.yaml to repository
+- [x] Install and configure pre-commit framework
+- [x] Setup Python hooks (ruff format, ruff check, ty type check)
+- [x] Setup general hooks (trailing whitespace, end of file, file size)
+- [x] Setup commit message validation
+- [x] Configure for both backend and future frontend (backend done, frontend ready)
+- [x] Add pre-commit to developer documentation
+- [x] Test hooks with intentional violations
+- [x] Update Makefile with pre-commit commands
+- [x] Add .pre-commit-config.yaml to repository
 
 ## Technical Details
 ### Hooks to Include

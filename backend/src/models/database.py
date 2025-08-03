@@ -1,6 +1,6 @@
 """Database configuration and session management."""
 
-from typing import Generator
+from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,7 +13,9 @@ settings = get_settings()
 # Create engine
 engine = create_engine(
     settings.database_url,
-    connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {},
+    connect_args={"check_same_thread": False}
+    if settings.database_url.startswith("sqlite")
+    else {},
     echo=settings.is_development,
 )
 

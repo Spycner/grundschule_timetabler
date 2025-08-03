@@ -25,12 +25,12 @@ format: ## Format code
 	uv run ruff format .
 
 typecheck: ## Run type checker
-	uvx --native-tls ty check
+	uv run ty check
 
 check: ## Run all checks (lint, format check, and type check)
 	uv run ruff check .
 	uv run ruff format --check .
-	uvx --native-tls ty check
+	uv run ty check
 
 fix: ## Fix linting issues and format code
 	uv run ruff check --fix .
@@ -73,3 +73,13 @@ update: ## Update all dependencies
 update-package: ## Update specific package (usage: make update-package pkg=fastapi)
 	uv lock --upgrade-package $(pkg)
 	uv sync
+
+pre-commit-install: ## Install pre-commit hooks
+	cd .. && uv run --directory backend pre-commit install --install-hooks
+	@echo "Pre-commit hooks installed successfully!"
+
+pre-commit-run: ## Run all pre-commit hooks manually
+	cd .. && uv run --directory backend pre-commit run --all-files
+
+pre-commit-update: ## Update pre-commit hook versions
+	cd .. && uv run --directory backend pre-commit autoupdate
