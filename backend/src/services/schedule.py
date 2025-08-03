@@ -1,11 +1,15 @@
 """Schedule service for business logic and conflict detection."""
 
+from datetime import UTC, datetime
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from src.models.schedule import Schedule
+from src.models.teacher_availability import AvailabilityType
 from src.models.timeslot import TimeSlot
 from src.schemas.schedule import ConflictDetail, ScheduleCreate, ScheduleUpdate
+from src.services.teacher_availability import TeacherAvailabilityService
 
 
 class ScheduleService:
@@ -174,6 +178,29 @@ class ScheduleService:
                 )
             )
 
+        # Check teacher availability
+        if timeslot:
+            # Convert timeslot day (1-5) to availability weekday (0-4)
+            weekday = timeslot.day - 1
+            availability = TeacherAvailabilityService.check_teacher_availability(
+                db,
+                schedule.teacher_id,
+                weekday,
+                timeslot.period,
+                datetime.now(UTC).date(),  # Use current date for availability check
+            )
+
+            if availability == AvailabilityType.BLOCKED:
+                conflicts.append(
+                    ConflictDetail(
+                        type="availability_conflict",
+                        message="Teacher is not available during this period",
+                    )
+                )
+            elif availability is None:
+                # No explicit availability set - could be a warning
+                pass  # For now, allow if no explicit availability is set
+
         # Build base query for conflict checking
         base_query = db.query(Schedule).filter(
             Schedule.timeslot_id == schedule.timeslot_id,
@@ -234,6 +261,8 @@ class ScheduleService:
             # Raise appropriate error based on conflict type
             if any(c.type == "break_conflict" for c in conflicts):
                 raise ValueError("Cannot schedule during break periods")
+            if any(c.type == "availability_conflict" for c in conflicts):
+                raise ValueError("Teacher is not available during this period")
             if any(c.type == "teacher_conflict" for c in conflicts):
                 raise ValueError("Teacher conflict detected")
             if any(c.type == "class_conflict" for c in conflicts):
