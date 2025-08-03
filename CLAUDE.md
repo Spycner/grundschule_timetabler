@@ -144,11 +144,12 @@ def test_create_teacher():
 - **Teacher model** with full CRUD operations (TDD approach)
 - **Class model** with full CRUD operations (TDD approach)
 - **Subject model** with full CRUD operations (TDD approach)
+- **TimeSlot model** with schedule grid management (TDD approach)
 - **Alembic migrations** for database management
-- **47 comprehensive tests** total (15 Teacher, 15 Class, 14 Subject, 3 Health)
+- **60 comprehensive tests** total (15 Teacher, 15 Class, 14 Subject, 13 TimeSlot, 3 Health)
 - **Docker & Docker Compose** configuration (with Valkey instead of Redis)
 - **GitHub Actions CI/CD** pipeline with comprehensive checks
-- **Development data seeders** for teachers, classes, and subjects
+- **Development data seeders** for teachers, classes, subjects, and timeslots (40 slots: 5 days × 8 periods)
 
 ### Current Phase: MVP Foundation (Simplified Approach)
 Focus: Get a working prototype for testing with real users (Hesse pre-school contacts)
@@ -157,7 +158,7 @@ Focus: Get a working prototype for testing with real users (Hesse pre-school con
 - Simple Teacher model (name, email, max_hours, part_time status)
 - Simple Class model (name, grade, size, home_room)
 - Simple Subject model (name, code, color for UI) ✅
-- Basic TimeSlot model (day, period, times)
+- Basic TimeSlot model (day, period, times) ✅
 - Manual Schedule creation (link entities together)
 - Conflict detection (no double bookings)
 
@@ -313,10 +314,16 @@ docker-compose up -d
 - `POST /api/v1/subjects` - Create new subject
 - `PUT /api/v1/subjects/{id}` - Update subject
 - `DELETE /api/v1/subjects/{id}` - Delete subject
+- `GET /api/v1/timeslots` - List all timeslots (ordered by day, period)
+- `GET /api/v1/timeslots/{id}` - Get specific timeslot
+- `POST /api/v1/timeslots` - Create new timeslot
+- `PUT /api/v1/timeslots/{id}` - Update timeslot
+- `DELETE /api/v1/timeslots/{id}` - Delete timeslot
+- `POST /api/v1/timeslots/generate-default` - Generate standard weekly schedule
 
 ### Database Management
 - **Alembic Migrations**: Database schema is now managed via migrations
-- **Current Migration**: `15b0cf10a170_add_subject_model`
+- **Current Migration**: `d2943aff3428_add_timeslot_model`
 - **Apply Migrations**: Run `make migrate-up` before starting the server
 - **Create Migrations**: Use `make migrate-create name="description"` for schema changes
 - **Important**: All models must be imported in `src/models/__init__.py` for Alembic to detect them
@@ -325,7 +332,7 @@ docker-compose up -d
 1. ~~Create simple Teacher model with basic CRUD (TDD)~~ ✅
 2. ~~Create simple Class model with basic CRUD (TDD)~~ ✅
 3. ~~Create simple Subject model with basic CRUD (TDD)~~ ✅
-4. Create TimeSlot model for schedule grid (TDD)
+4. ~~Create TimeSlot model for schedule grid (TDD)~~ ✅
 5. Create Schedule model to link entities (TDD)
 6. Add conflict detection for double bookings
 7. Build minimal UI for manual schedule creation

@@ -3,5 +3,6 @@
 from src.models.class_ import Class
 from src.models.subject import Subject
 from src.models.teacher import Teacher
+from src.models.timeslot import TimeSlot
 
-__all__ = ["Class", "Subject", "Teacher"]
+__all__ = ["Class", "Subject", "Teacher", "TimeSlot"]
