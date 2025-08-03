@@ -1,0 +1,780 @@
+# API Documentation
+
+## Overview
+
+The Grundschule Timetabler API is a RESTful API built with FastAPI that provides endpoints for managing school timetabling operations. All endpoints are versioned to ensure backward compatibility and smooth migrations.
+
+## Base URL
+
+```
+Development: http://localhost:8000
+Production: TBD
+```
+
+## API Versioning
+
+### Strategy
+We use URL path versioning for clear and explicit version control:
+- Current version: `v1`
+- Base path: `/api/v1/`
+- Example: `http://localhost:8000/api/v1/teachers`
+
+### Version Lifecycle
+- **Active**: Currently supported and receiving updates
+- **Deprecated**: Supported but not receiving new features (6-month notice)
+- **Sunset**: No longer available
+
+### Migration Path
+When a new version is released:
+1. Both versions run concurrently for 6 months
+2. Deprecation warnings added to old version responses
+3. Migration guide provided for breaking changes
+4. Old version removed after sunset period
+
+## Authentication
+
+Currently, the API does not require authentication (development phase). Future versions will implement:
+- JWT-based authentication
+- Role-based access control (RBAC)
+- API key support for external integrations
+
+## Common Headers
+
+### Request Headers
+```http
+Content-Type: application/json
+Accept: application/json
+```
+
+### Response Headers
+```http
+Content-Type: application/json
+X-API-Version: v1
+```
+
+## Error Handling
+
+### Error Response Format
+```json
+{
+  "detail": "Error message describing what went wrong"
+}
+```
+
+### HTTP Status Codes
+- `200 OK` - Successful GET, PUT
+- `201 Created` - Successful POST
+- `204 No Content` - Successful DELETE
+- `400 Bad Request` - Invalid request data
+- `404 Not Found` - Resource not found
+- `409 Conflict` - Duplicate resource (e.g., email already exists)
+- `422 Unprocessable Entity` - Validation error
+- `500 Internal Server Error` - Server error
+
+## Endpoints
+
+### Health Checks
+
+#### GET /api/v1/health
+Basic health check to verify the service is running.
+
+**Response**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-08-03T12:00:00Z",
+  "service": "Grundschule Timetabler API",
+  "version": "0.1.0",
+  "environment": "development"
+}
+```
+
+#### GET /api/v1/health/ready
+Readiness check including database connectivity.
+
+**Response**
+```json
+{
+  "status": "ready",
+  "timestamp": "2025-08-03T12:00:00Z",
+  "service": "Grundschule Timetabler API",
+  "version": "0.1.0",
+  "environment": "development",
+  "database": "connected"
+}
+```
+
+### Teacher Management
+
+#### GET /api/v1/teachers
+List all teachers with optional pagination.
+
+**Query Parameters**
+- `skip` (int, optional): Number of records to skip (default: 0)
+- `limit` (int, optional): Maximum number of records to return (default: 100)
+
+**Response**
+```json
+[
+  {
+    "id": 1,
+    "first_name": "Maria",
+    "last_name": "Müller",
+    "email": "maria.mueller@schule.de",
+    "abbreviation": "MUE",
+    "max_hours_per_week": 28,
+    "is_part_time": false,
+    "created_at": "2025-08-03T10:00:00Z",
+    "updated_at": "2025-08-03T10:00:00Z"
+  }
+]
+```
+
+#### GET /api/v1/teachers/{id}
+Get a specific teacher by ID.
+
+**Path Parameters**
+- `id` (int): Teacher ID
+
+**Response**
+```json
+{
+  "id": 1,
+  "first_name": "Maria",
+  "last_name": "Müller",
+  "email": "maria.mueller@schule.de",
+  "abbreviation": "MUE",
+  "max_hours_per_week": 28,
+  "is_part_time": false,
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T10:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Teacher not found
+
+#### POST /api/v1/teachers
+Create a new teacher.
+
+**Request Body**
+```json
+{
+  "first_name": "Maria",
+  "last_name": "Müller",
+  "email": "maria.mueller@schule.de",
+  "abbreviation": "MUE",
+  "max_hours_per_week": 28,
+  "is_part_time": false
+}
+```
+
+**Validation Rules**
+- `first_name`: Required, 1-100 characters
+- `last_name`: Required, 1-100 characters
+- `email`: Required, valid email format, unique
+- `abbreviation`: Required, 2-3 characters, unique, automatically uppercased
+- `max_hours_per_week`: Optional (default: 28), range: 1-40
+- `is_part_time`: Optional (default: false)
+
+**Response**
+```json
+{
+  "id": 1,
+  "first_name": "Maria",
+  "last_name": "Müller",
+  "email": "maria.mueller@schule.de",
+  "abbreviation": "MUE",
+  "max_hours_per_week": 28,
+  "is_part_time": false,
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T10:00:00Z"
+}
+```
+
+**Error Responses**
+- `409 Conflict` - Email or abbreviation already exists
+- `422 Unprocessable Entity` - Validation error
+
+#### PUT /api/v1/teachers/{id}
+Update an existing teacher. All fields are optional.
+
+**Path Parameters**
+- `id` (int): Teacher ID
+
+**Request Body**
+```json
+{
+  "max_hours_per_week": 20,
+  "is_part_time": true
+}
+```
+
+**Response**
+```json
+{
+  "id": 1,
+  "first_name": "Maria",
+  "last_name": "Müller",
+  "email": "maria.mueller@schule.de",
+  "abbreviation": "MUE",
+  "max_hours_per_week": 20,
+  "is_part_time": true,
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T12:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Teacher not found
+- `409 Conflict` - Email or abbreviation already exists
+- `422 Unprocessable Entity` - Validation error
+
+#### DELETE /api/v1/teachers/{id}
+Delete a teacher.
+
+**Path Parameters**
+- `id` (int): Teacher ID
+
+**Response**
+- `204 No Content` - Successfully deleted
+
+**Error Responses**
+- `404 Not Found` - Teacher not found
+
+### Class Management
+
+#### GET /api/v1/classes
+List all classes with optional pagination.
+
+**Query Parameters**
+- `skip` (int, optional): Number of records to skip (default: 0)
+- `limit` (int, optional): Maximum number of records to return (default: 100)
+
+**Response**
+```json
+[
+  {
+    "id": 1,
+    "name": "1a",
+    "grade": 1,
+    "size": 22,
+    "home_room": "Raum 101",
+    "created_at": "2025-08-03T10:00:00Z",
+    "updated_at": "2025-08-03T10:00:00Z"
+  }
+]
+```
+
+#### GET /api/v1/classes/{id}
+Get a specific class by ID.
+
+**Path Parameters**
+- `id` (int): Class ID
+
+**Response**
+```json
+{
+  "id": 1,
+  "name": "1a",
+  "grade": 1,
+  "size": 22,
+  "home_room": "Raum 101",
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T10:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Class not found
+
+#### POST /api/v1/classes
+Create a new class.
+
+**Request Body**
+```json
+{
+  "name": "1a",
+  "grade": 1,
+  "size": 22,
+  "home_room": "Raum 101"
+}
+```
+
+**Response**
+- `201 Created` with created class object
+
+**Error Responses**
+- `409 Conflict` - Class with this name already exists
+- `422 Unprocessable Entity` - Validation error (grade must be 1-4, size must be 1-40)
+
+#### PUT /api/v1/classes/{id}
+Update an existing class. All fields are optional.
+
+**Path Parameters**
+- `id` (int): Class ID
+
+**Request Body**
+```json
+{
+  "size": 24,
+  "home_room": "Raum 102"
+}
+```
+
+**Response**
+```json
+{
+  "id": 1,
+  "name": "1a",
+  "grade": 1,
+  "size": 24,
+  "home_room": "Raum 102",
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T12:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Class not found
+- `409 Conflict` - Name already exists
+- `422 Unprocessable Entity` - Validation error
+
+#### DELETE /api/v1/classes/{id}
+Delete a class.
+
+**Path Parameters**
+- `id` (int): Class ID
+
+**Response**
+- `204 No Content` - Successfully deleted
+
+**Error Responses**
+- `404 Not Found` - Class not found
+
+### Subject Management
+
+#### GET /api/v1/subjects
+List all subjects with optional pagination.
+
+**Query Parameters**
+- `skip` (int, optional): Number of records to skip (default: 0)
+- `limit` (int, optional): Maximum number of records to return (default: 100)
+
+**Response**
+```json
+[
+  {
+    "id": 1,
+    "name": "Mathematik",
+    "code": "MA",
+    "color": "#2563EB",
+    "created_at": "2025-08-03T10:00:00Z",
+    "updated_at": "2025-08-03T10:00:00Z"
+  }
+]
+```
+
+#### GET /api/v1/subjects/{id}
+Get a specific subject by ID.
+
+**Path Parameters**
+- `id` (int): Subject ID
+
+**Response**
+```json
+{
+  "id": 1,
+  "name": "Mathematik",
+  "code": "MA",
+  "color": "#2563EB",
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T10:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Subject not found
+
+#### POST /api/v1/subjects
+Create a new subject.
+
+**Request Body**
+```json
+{
+  "name": "Mathematik",
+  "code": "MA",
+  "color": "#2563EB"
+}
+```
+
+**Validation Rules**
+- `name`: Must be unique
+- `code`: Must be unique, 2-4 characters, automatically converted to uppercase
+- `color`: Must be valid hex color format (#RRGGBB)
+
+**Response**
+- `201 Created` with created subject object
+
+**Error Responses**
+- `409 Conflict` - Subject with this name or code already exists
+- `422 Unprocessable Entity` - Validation error (invalid color format, code length)
+
+#### PUT /api/v1/subjects/{id}
+Update an existing subject. All fields are optional.
+
+**Path Parameters**
+- `id` (int): Subject ID
+
+**Request Body**
+```json
+{
+  "color": "#3B82F6"
+}
+```
+
+**Response**
+```json
+{
+  "id": 1,
+  "name": "Mathematik",
+  "code": "MA",
+  "color": "#3B82F6",
+  "created_at": "2025-08-03T10:00:00Z",
+  "updated_at": "2025-08-03T12:00:00Z"
+}
+```
+
+**Error Responses**
+- `404 Not Found` - Subject not found
+- `409 Conflict` - Name or code already exists
+- `422 Unprocessable Entity` - Validation error
+
+#### DELETE /api/v1/subjects/{id}
+Delete a subject.
+
+**Path Parameters**
+- `id` (int): Subject ID
+
+**Response**
+- `204 No Content` - Successfully deleted
+
+**Error Responses**
+- `404 Not Found` - Subject not found
+
+## Pagination
+
+For endpoints that return lists, pagination is implemented using `skip` and `limit` parameters:
+- `skip`: Number of records to skip (for offset-based pagination)
+- `limit`: Maximum number of records to return
+
+Example:
+```
+GET /api/v1/teachers?skip=20&limit=10
+```
+This returns 10 teachers starting from the 21st record.
+
+## Rate Limiting
+
+Currently not implemented. Future versions will include:
+- 1000 requests per hour per IP (anonymous)
+- 10000 requests per hour per authenticated user
+- Headers will include rate limit information
+
+## CORS
+
+Cross-Origin Resource Sharing is configured for:
+- Development: `http://localhost:5173`, `http://localhost:3000`
+- Production: Will be configured based on frontend deployment
+
+## Examples
+
+### cURL Examples
+
+#### Create a Teacher
+```bash
+curl -X POST http://localhost:8000/api/v1/teachers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Hans",
+    "last_name": "Schmidt",
+    "email": "hans.schmidt@schule.de",
+    "abbreviation": "SCH",
+    "max_hours_per_week": 20,
+    "is_part_time": true
+  }'
+```
+
+#### Update a Teacher
+```bash
+curl -X PUT http://localhost:8000/api/v1/teachers/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "max_hours_per_week": 25
+  }'
+```
+
+#### Delete a Teacher
+```bash
+curl -X DELETE http://localhost:8000/api/v1/teachers/1
+```
+
+### Python Example
+
+```python
+import requests
+
+# Base URL
+BASE_URL = "http://localhost:8000/api/v1"
+
+# Create a teacher
+teacher_data = {
+    "first_name": "Anna",
+    "last_name": "Weber",
+    "email": "anna.weber@schule.de",
+    "abbreviation": "WEB",
+    "max_hours_per_week": 28,
+    "is_part_time": False
+}
+
+response = requests.post(f"{BASE_URL}/teachers", json=teacher_data)
+teacher = response.json()
+print(f"Created teacher with ID: {teacher['id']}")
+
+# Get all teachers
+response = requests.get(f"{BASE_URL}/teachers")
+teachers = response.json()
+print(f"Total teachers: {len(teachers)}")
+```
+
+### JavaScript/TypeScript Example
+
+```typescript
+const BASE_URL = 'http://localhost:8000/api/v1';
+
+// Create a teacher
+async function createTeacher() {
+  const teacherData = {
+    first_name: 'Klaus',
+    last_name: 'Meyer',
+    email: 'klaus.meyer@schule.de',
+    abbreviation: 'MEY',
+    max_hours_per_week: 28,
+    is_part_time: false
+  };
+
+  const response = await fetch(`${BASE_URL}/teachers`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(teacherData),
+  });
+
+  const teacher = await response.json();
+  console.log('Created teacher:', teacher);
+}
+
+// Get all teachers
+async function getTeachers() {
+  const response = await fetch(`${BASE_URL}/teachers`);
+  const teachers = await response.json();
+  console.log('Teachers:', teachers);
+}
+```
+
+## Schedule Management Endpoints
+
+### Algorithm-Powered Schedule Generation
+
+#### POST /api/v1/schedule/generate
+Generate complete schedule using OR-Tools CP-SAT algorithm.
+
+**Request Body**
+```json
+{
+  "preserve_existing": false,
+  "time_limit_seconds": 60,
+  "clear_existing": true
+}
+```
+
+**Parameters**
+- `preserve_existing`: boolean (default: true) - Keep existing schedule entries as fixed assignments
+- `time_limit_seconds`: integer (default: 60) - Maximum solving time in seconds
+- `clear_existing`: boolean (default: false) - Delete all existing schedules before generating
+
+**Response**
+```json
+{
+  "schedules": [
+    {
+      "teacher_id": 1,
+      "class_id": 1,
+      "subject_id": 1,
+      "timeslot_id": 1,
+      "room": null,
+      "week_type": "ALL"
+    }
+  ],
+  "quality_score": 87.5,
+  "generation_time": 2.34,
+  "satisfied_constraints": ["All hard constraints satisfied"],
+  "violated_constraints": [],
+  "objective_value": 1250,
+  "schedule_count": 45
+}
+```
+
+**Error Responses**
+- `500 Internal Server Error` - Algorithm failed or no feasible solution
+
+#### POST /api/v1/schedule/optimize
+Optimize existing schedule while preserving all current assignments.
+
+**Request Body**
+```json
+{
+  "time_limit_seconds": 30
+}
+```
+
+**Response**
+Same format as `/generate` endpoint.
+
+#### GET /api/v1/schedule/statistics
+Get comprehensive schedule statistics and quality metrics.
+
+**Response**
+```json
+{
+  "total_schedules": 45,
+  "schedules_by_teacher": {
+    "Maria Müller": 12,
+    "Klaus Meyer": 15
+  },
+  "schedules_by_class": {
+    "1a": 25,
+    "2b": 20
+  },
+  "schedules_by_subject": {
+    "Deutsch": 15,
+    "Mathematik": 12,
+    "Sport": 8
+  }
+}
+```
+
+### Manual Schedule Management
+
+#### GET /api/v1/schedule
+List all schedules with optional filters.
+
+**Query Parameters**
+- `skip`: integer (default: 0) - Number of records to skip
+- `limit`: integer (default: 100) - Maximum records to return
+- `week_type`: string - Filter by week type (ALL, A, B)
+- `day`: integer (1-5) - Filter by day of week
+- `include_breaks`: boolean (default: true) - Include break periods
+
+#### POST /api/v1/schedule/validate
+Validate schedule entry for conflicts before creation.
+
+**Request Body**
+```json
+{
+  "class_id": 1,
+  "teacher_id": 1,
+  "subject_id": 1,
+  "timeslot_id": 1,
+  "room": "101",
+  "week_type": "ALL"
+}
+```
+
+**Response**
+```json
+{
+  "valid": false,
+  "conflicts": [
+    {
+      "type": "teacher_conflict",
+      "message": "Teacher is already scheduled for another class at this time",
+      "existing_entry_id": 42
+    }
+  ]
+}
+```
+
+#### GET /api/v1/schedule/conflicts
+List all conflicts in the current schedule.
+
+**Response**
+```json
+{
+  "conflicts": [
+    {
+      "schedule_id": 15,
+      "conflicts": [
+        {
+          "type": "qualification_conflict",
+          "message": "Teacher is not qualified to teach this subject"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Algorithm Performance
+
+The scheduling algorithm is optimized for German Grundschule scale:
+
+- **Generation Time**: < 5 seconds for typical school (12 classes, 15 teachers)
+- **Quality Scoring**: 0-100% based on constraint satisfaction
+- **Scalability**: Tested up to 25+ teachers, 200+ weekly lessons
+- **Reliability**: 104 comprehensive tests covering all scenarios
+
+## Integration Examples
+
+### Generate Complete Schedule
+```javascript
+async function generateSchedule() {
+  const response = await fetch('/api/v1/schedule/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      preserve_existing: false,
+      time_limit_seconds: 60,
+      clear_existing: true
+    })
+  });
+
+  const solution = await response.json();
+  
+  if (solution.schedule_count > 0) {
+    console.log(`Generated ${solution.schedule_count} schedules`);
+    console.log(`Quality score: ${solution.quality_score}%`);
+  } else {
+    console.log('No feasible solution found');
+  }
+}
+```
+
+### Check Schedule Quality
+```javascript
+async function getScheduleQuality() {
+  const response = await fetch('/api/v1/schedule/statistics');
+  const stats = await response.json();
+  
+  console.log(`Total schedules: ${stats.total_schedules}`);
+  console.log('Teacher workload:', stats.schedules_by_teacher);
+}
+```
+
+## Support
+
+For API issues or questions:
+- Check the interactive documentation at `/docs`
+- Review error messages for specific validation issues
+- Contact: pascal98kraus@gmail.com

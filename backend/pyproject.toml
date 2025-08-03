@@ -9,7 +9,9 @@ authors = [
 ]
 dependencies = [
     "alembic>=1.16.4",
+    "email-validator>=2.2.0",
     "fastapi>=0.116.1",
+    "ortools>=9.14.6206",
     "psycopg2-binary>=2.9.10",
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
@@ -25,6 +27,7 @@ dev = [
     "pre-commit>=4.0.0",
     "pytest>=8.4.1",
     "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
     "ruff>=0.12.7",
 ]
 

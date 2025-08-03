@@ -51,6 +51,13 @@ migrate-down: ## Rollback one migration
 migrate-history: ## Show migration history
 	uv run alembic history
 
+migrate-current: ## Show current migration version
+	uv run alembic current
+
+migrate-reset: ## Reset database and apply all migrations
+	rm -f timetabler.db
+	uv run alembic upgrade head
+
 clean: ## Clean up generated files
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
@@ -83,3 +90,38 @@ pre-commit-run: ## Run all pre-commit hooks manually
 
 pre-commit-update: ## Update pre-commit hook versions
 	cd .. && uv run --directory backend pre-commit autoupdate
+
+# Docker commands
+docker-build: ## Build Docker images
+	cd .. && docker-compose build
+
+docker-up: ## Start all Docker services
+	cd .. && docker-compose up -d
+
+docker-down: ## Stop all Docker services
+	cd .. && docker-compose down
+
+docker-logs: ## Show Docker logs
+	cd .. && docker-compose logs -f
+
+docker-shell: ## Open shell in backend container
+	cd .. && docker-compose exec backend /bin/bash
+
+docker-db-shell: ## Open PostgreSQL shell in Docker
+	cd .. && docker-compose exec db psql -U postgres -d grundschule_timetabler
+
+docker-clean: ## Remove Docker containers and volumes
+	cd .. && docker-compose down -v
+
+docker-restart: ## Restart Docker services
+	cd .. && docker-compose restart
+
+# Seeder commands
+seed: ## Seed database with development data
+	uv run python src/seeders/run.py
+
+seed-clear: ## Clear and reseed database
+	uv run python src/seeders/run.py --clear
+
+seed-clear-only: ## Clear all seeded data
+	uv run python src/seeders/run.py --clear-only
