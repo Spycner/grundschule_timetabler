@@ -26,8 +26,8 @@ A modern, web-based timetabling application designed specifically for German Gru
 - Development data seeders for all models
 
 ### 🚧 In Progress
-- Time slot management
-- Basic scheduling logic
+- Schedule model implementation
+- Conflict detection for double bookings
 
 ### 📋 Planned
 - Frontend with React/TypeScript

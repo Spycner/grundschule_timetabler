@@ -30,7 +30,9 @@ def override_get_db():
 def db():
     """Create a fresh database for each test."""
     Base.metadata.create_all(bind=engine)
-    yield TestingSessionLocal()
+    session = TestingSessionLocal()
+    yield session
+    session.close()
     Base.metadata.drop_all(bind=engine)
 
 

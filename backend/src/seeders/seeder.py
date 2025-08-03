@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from src.models.class_ import Class
 from src.models.subject import Subject
 from src.models.teacher import Teacher
+from src.models.timeslot import TimeSlot
+from src.seeders.timeslot_seeder import seed_timeslots
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,11 @@ class DatabaseSeeder:
             stats["subjects"] = len(subjects)
             logger.info(f"Seeded {len(subjects)} subjects")
 
-            # TODO: Implement timeslot seeding when TimeSlot model is created
+            # Seed timeslots
+            seed_timeslots(self.db)
+            stats["timeslots"] = self.db.query(TimeSlot).count()
+            logger.info(f"Seeded {stats['timeslots']} timeslots")
+
             # TODO: Implement schedule seeding when Schedule model is created
 
             self.db.commit()
@@ -288,7 +294,9 @@ class DatabaseSeeder:
         try:
             # Clear in reverse order of dependencies
             # TODO: Clear schedules when Schedule model is implemented
-            # TODO: Clear timeslots when TimeSlot model is implemented
+
+            # Clear timeslots
+            stats["timeslots"] = self.db.query(TimeSlot).delete()
 
             # Clear subjects
             stats["subjects"] = self.db.query(Subject).delete()

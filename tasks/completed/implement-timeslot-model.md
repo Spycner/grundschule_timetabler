@@ -6,6 +6,9 @@ High
 ## Created
 2025-08-03
 
+## Completed
+2025-08-03
+
 ## Description
 Create a TimeSlot (Zeitfenster) data model and basic CRUD API endpoints. TimeSlots define the weekly schedule grid structure with periods and breaks.
 
