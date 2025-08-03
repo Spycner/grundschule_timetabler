@@ -7,7 +7,7 @@ default_stages: [pre-commit]
 repos:
   # Python hooks - Ruff for formatting and linting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.12.7
     hooks:
       - id: ruff
         args: [--fix]
@@ -43,7 +43,7 @@ repos:
         args: [--branch, main]
         stages: [pre-commit]
 
-  # Local hooks for ty type checking
+  # Local hooks for backend checks
   - repo: local
     hooks:
       - id: ty-check
@@ -56,9 +56,29 @@ repos:
         require_serial: true
         verbose: true
 
+      - id: pytest
+        name: run tests
+        entry: bash -c 'cd backend && uv run pytest --no-cov -x'
+        language: system
+        types: [python]
+        files: ^backend/.*\.py$
+        pass_filenames: false
+        require_serial: true
+        verbose: true
+
+      - id: migration-check
+        name: check database migrations
+        entry: bash -c 'cd backend && uv run alembic check'
+        language: system
+        types: [python]
+        files: ^backend/(alembic/.*|src/models/.*)\.py$
+        pass_filenames: false
+        require_serial: true
+        verbose: true
+
   # Conventional commits validation
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.2.0
+    rev: v4.8.3
     hooks:
       - id: commitizen
         stages: [commit-msg]

@@ -540,9 +540,9 @@ class TestScheduleIntegration:
         response = client.post(
             f"/api/v1/teachers/{teacher_id}/subjects", json=qualification_data
         )
-        assert (
-            response.status_code == 201
-        ), f"Failed to create qualification: {response.text}"
+        assert response.status_code == 201, (
+            f"Failed to create qualification: {response.text}"
+        )
 
         # Create a timeslot for testing
         timeslot_data = {
@@ -584,9 +584,9 @@ class TestScheduleIntegration:
         response = client.post(
             f"/api/v1/teachers/{teacher_id}/availability", json=availability_data
         )
-        assert (
-            response.status_code == 201
-        ), f"Failed to create availability: {response.text}"
+        assert response.status_code == 201, (
+            f"Failed to create availability: {response.text}"
+        )
 
         # Try to create a schedule (should fail)
         schedule_data = {
