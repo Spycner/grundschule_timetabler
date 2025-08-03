@@ -53,30 +53,49 @@ A modern, web-based timetabling application designed specifically for German Gru
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.12+
-- uv package manager ([installation guide](https://github.com/astral-sh/uv))
+- Docker and Docker Compose (recommended)
+- OR Python 3.12+ with uv package manager
 - Git
 
-### Installation
-
-1. **Clone the repository**
+### Option 1: Using Docker (Recommended)
 ```bash
+# Clone repository
 git clone https://github.com/Spycner/grundschule_timetabler.git
 cd grundschule_timetabler
+
+# Start all services
+docker-compose up -d
+
+# Run migrations
+docker-compose exec backend alembic upgrade head
+
+# Seed development data (optional)
+docker-compose exec backend python src/seeders/run.py
+
+# Access the application
+# API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+# Email UI: http://localhost:8025
 ```
 
-2. **Set up the backend**
+See [DOCKER.md](DOCKER.md) for detailed Docker setup.
+
+### Option 2: Local Development
 ```bash
+# Clone repository
+git clone https://github.com/Spycner/grundschule_timetabler.git
+cd grundschule_timetabler
+
+# Set up backend
 cd backend
 make install        # Install dependencies
 make migrate-up     # Apply database migrations
 make dev           # Start development server
-```
 
-3. **Access the application**
-- API: http://localhost:8000
-- API Documentation: http://localhost:8000/docs
-- Health check: http://localhost:8000/api/v1/health
+# Access the application
+# API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
 
 ## 📚 Documentation
 
