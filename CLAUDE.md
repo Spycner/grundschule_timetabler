@@ -146,8 +146,9 @@ def test_create_teacher():
 - **Subject model** with full CRUD operations (TDD approach)
 - **TimeSlot model** with schedule grid management (TDD approach)
 - **Schedule model** with comprehensive conflict detection (TDD approach)
+- **Teacher Availability model** with AVAILABLE/BLOCKED/PREFERRED states (TDD approach)
 - **Alembic migrations** for database management
-- **74 comprehensive tests** total (15 Teacher, 15 Class, 14 Subject, 13 TimeSlot, 14 Schedule, 3 Health)
+- **90 comprehensive tests** total (15 Teacher, 15 Class, 14 Subject, 13 TimeSlot, 14 Schedule, 16 Teacher Availability, 3 Health)
 - **Docker & Docker Compose** configuration (with Valkey instead of Redis)
 - **GitHub Actions CI/CD** pipeline with comprehensive checks
 - **Development data seeders** for teachers, classes, subjects, and timeslots (40 slots: 5 days × 8 periods)
@@ -300,42 +301,62 @@ docker-compose up -d
 - `GET /` - Welcome message (unversioned)
 - `GET /api/v1/health` - Basic health check
 - `GET /api/v1/health/ready` - Database connectivity check
+
+**Teachers:**
 - `GET /api/v1/teachers` - List all teachers
 - `GET /api/v1/teachers/{id}` - Get specific teacher
 - `POST /api/v1/teachers` - Create new teacher
 - `PUT /api/v1/teachers/{id}` - Update teacher
 - `DELETE /api/v1/teachers/{id}` - Delete teacher
+
+**Teacher Availability:**
+- `GET /api/v1/teachers/{id}/availability` - Get teacher's availability
+- `POST /api/v1/teachers/{id}/availability` - Create availability entry
+- `PUT /api/v1/teachers/{id}/availability/{id}` - Update availability
+- `DELETE /api/v1/teachers/{id}/availability/{id}` - Delete availability
+- `POST /api/v1/teachers/availability/bulk` - Bulk import availability
+- `GET /api/v1/teachers/{id}/availability/overview` - Get availability overview
+- `GET /api/v1/teachers/{id}/availability/validate` - Validate constraints
+- `GET /api/v1/teachers/availability/overview` - All teachers overview
+
+**Classes:**
 - `GET /api/v1/classes` - List all classes
 - `GET /api/v1/classes/{id}` - Get specific class
 - `POST /api/v1/classes` - Create new class
 - `PUT /api/v1/classes/{id}` - Update class
 - `DELETE /api/v1/classes/{id}` - Delete class
+
+**Subjects:**
 - `GET /api/v1/subjects` - List all subjects
 - `GET /api/v1/subjects/{id}` - Get specific subject
 - `POST /api/v1/subjects` - Create new subject
 - `PUT /api/v1/subjects/{id}` - Update subject
 - `DELETE /api/v1/subjects/{id}` - Delete subject
+
+**TimeSlots:**
 - `GET /api/v1/timeslots` - List all timeslots (ordered by day, period)
 - `GET /api/v1/timeslots/{id}` - Get specific timeslot
 - `POST /api/v1/timeslots` - Create new timeslot
 - `PUT /api/v1/timeslots/{id}` - Update timeslot
 - `DELETE /api/v1/timeslots/{id}` - Delete timeslot
 - `POST /api/v1/timeslots/generate-default` - Generate standard weekly schedule
+
+**Schedule:**
 - `GET /api/v1/schedule` - List all schedules with filters
 - `GET /api/v1/schedule/{id}` - Get specific schedule entry
-- `POST /api/v1/schedule` - Create new schedule entry
+- `POST /api/v1/schedule` - Create new schedule entry (checks availability)
 - `PUT /api/v1/schedule/{id}` - Update schedule entry
 - `DELETE /api/v1/schedule/{id}` - Delete schedule entry
 - `GET /api/v1/schedule/class/{id}` - Get schedule by class
 - `GET /api/v1/schedule/teacher/{id}` - Get schedule by teacher
 - `GET /api/v1/schedule/room/{room}` - Get schedule by room
-- `POST /api/v1/schedule/validate` - Validate for conflicts
+- `POST /api/v1/schedule/validate` - Validate for conflicts (including availability)
 - `GET /api/v1/schedule/conflicts` - List all conflicts
 - `POST /api/v1/schedule/bulk` - Create multiple entries
 
 ### Database Management
 - **Alembic Migrations**: Database schema is now managed via migrations
-- **Current Migration**: `4360045a52c4_add_schedule_model`
+- **Current Migration**: `214fec70abb4_add_teacher_availability_model`
 - **Apply Migrations**: Run `make migrate-up` before starting the server
 - **Create Migrations**: Use `make migrate-create name="description"` for schema changes
 - **Important**: All models must be imported in `src/models/__init__.py` for Alembic to detect them
@@ -352,7 +373,7 @@ docker-compose up -d
 The following backend features are planned to complete the MVP:
 
 #### High Priority
-- **Teacher Availability Model** - Track when teachers can teach (part-time, blocked periods)
+- ✅ **Teacher Availability Model** - Track when teachers can teach (part-time, blocked periods)
 - **Teacher-Subject Assignment** - Manage qualifications and teaching assignments
 - **Basic Scheduling Algorithm** - Automatic timetable generation with constraint solving
 

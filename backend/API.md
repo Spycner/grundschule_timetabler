@@ -95,6 +95,239 @@ Delete a teacher.
 
 ---
 
+### Teacher Availability
+
+Manage when teachers are available to teach, including part-time schedules, blocked periods, and preferences.
+
+#### GET /api/v1/teachers/{teacher_id}/availability
+Get all availability entries for a specific teacher.
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+
+**Query Parameters:**
+- `weekday` (int, optional): Filter by weekday (0=Monday, 4=Friday)
+- `period` (int, optional): Filter by period (1-8)
+- `active_date` (date, optional): Filter by active date (ISO format: YYYY-MM-DD)
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "teacher_id": 1,
+    "weekday": 0,
+    "period": 1,
+    "availability_type": "AVAILABLE",
+    "effective_from": "2020-01-01",
+    "effective_until": null,
+    "reason": null,
+    "created_at": "2025-08-03T10:00:00",
+    "updated_at": "2025-08-03T10:00:00"
+  },
+  {
+    "id": 2,
+    "teacher_id": 1,
+    "weekday": 2,
+    "period": 3,
+    "availability_type": "BLOCKED",
+    "effective_from": "2020-01-01",
+    "effective_until": "2020-06-30",
+    "reason": "Staff meeting",
+    "created_at": "2025-08-03T10:00:00",
+    "updated_at": "2025-08-03T10:00:00"
+  }
+]
+```
+
+#### POST /api/v1/teachers/{teacher_id}/availability
+Create a new availability entry for a teacher.
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+
+**Request Body:**
+```json
+{
+  "weekday": 0,
+  "period": 1,
+  "availability_type": "BLOCKED",
+  "effective_from": "2020-01-01",
+  "effective_until": "2020-06-30",
+  "reason": "Administrative duties"
+}
+```
+
+**Availability Types:**
+- `AVAILABLE`: Teacher can teach during this period
+- `BLOCKED`: Teacher cannot teach (meetings, other duties)
+- `PREFERRED`: Teacher prefers to teach (soft constraint for optimization)
+
+**Validation Rules:**
+- `weekday`: 0-4 (Monday to Friday)
+- `period`: 1-8
+- `effective_until` must be after `effective_from` if provided
+- Unique constraint: One entry per teacher/weekday/period/effective_from
+
+#### PUT /api/v1/teachers/{teacher_id}/availability/{availability_id}
+Update an existing availability entry.
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+- `availability_id` (int): The availability entry ID
+
+**Request Body (all fields optional):**
+```json
+{
+  "availability_type": "PREFERRED",
+  "reason": "Updated reason"
+}
+```
+
+#### DELETE /api/v1/teachers/{teacher_id}/availability/{availability_id}
+Delete an availability entry.
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+- `availability_id` (int): The availability entry ID
+
+**Response:** 204 No Content
+
+#### POST /api/v1/teachers/availability/bulk
+Create multiple availability entries for a teacher at once.
+
+**Request Body:**
+```json
+{
+  "teacher_id": 1,
+  "availabilities": [
+    {
+      "weekday": 0,
+      "period": 1,
+      "availability_type": "AVAILABLE",
+      "effective_from": "2020-01-01"
+    },
+    {
+      "weekday": 0,
+      "period": 2,
+      "availability_type": "AVAILABLE",
+      "effective_from": "2020-01-01"
+    },
+    {
+      "weekday": 1,
+      "period": 1,
+      "availability_type": "BLOCKED",
+      "effective_from": "2020-01-01",
+      "reason": "Part-time schedule"
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "created_count": 3,
+  "entries": [/* array of created availability entries */]
+}
+```
+
+#### GET /api/v1/teachers/{teacher_id}/availability/overview
+Get an overview of a teacher's availability patterns.
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+
+**Query Parameters:**
+- `active_date` (date, optional): Date to check availability for (default: today)
+
+**Response:**
+```json
+{
+  "teacher_id": 1,
+  "teacher_name": "Maria Müller",
+  "is_part_time": false,
+  "max_hours_per_week": 28,
+  "available_hours": 20,
+  "blocked_hours": 5,
+  "preferred_hours": 3,
+  "availability_by_day": {
+    "0": {"available": 4, "blocked": 1, "preferred": 1},
+    "1": {"available": 4, "blocked": 1, "preferred": 0},
+    "2": {"available": 4, "blocked": 1, "preferred": 1},
+    "3": {"available": 4, "blocked": 1, "preferred": 1},
+    "4": {"available": 4, "blocked": 1, "preferred": 0}
+  }
+}
+```
+
+#### GET /api/v1/teachers/{teacher_id}/availability/validate
+Validate a teacher's availability against constraints (e.g., part-time limits).
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+
+**Query Parameters:**
+- `active_date` (date, optional): Date to validate for (default: today)
+
+**Response:**
+```json
+{
+  "teacher_id": 1,
+  "max_hours_per_week": 20,
+  "available_hours": 20,
+  "scheduled_hours": 15,
+  "is_valid": true,
+  "warnings": [
+    "Part-time teacher has 20 available hours but max is 20"
+  ],
+  "conflicts": []
+}
+```
+
+#### GET /api/v1/teachers/availability/overview
+Get availability overview for all teachers.
+
+**Query Parameters:**
+- `active_date` (date, optional): Date to check availability for (default: today)
+
+**Response:**
+```json
+{
+  "teachers": [
+    {
+      "teacher_id": 1,
+      "teacher_name": "Maria Müller",
+      "is_part_time": false,
+      "max_hours_per_week": 28,
+      "available_hours": 20,
+      "blocked_hours": 5,
+      "preferred_hours": 3,
+      "availability_by_day": {/* ... */}
+    },
+    {
+      "teacher_id": 2,
+      "teacher_name": "Hans Schmidt",
+      "is_part_time": true,
+      "max_hours_per_week": 15,
+      "available_hours": 15,
+      "blocked_hours": 10,
+      "preferred_hours": 0,
+      "availability_by_day": {/* ... */}
+    }
+  ],
+  "total": 2
+}
+```
+
+**Use Cases:**
+1. **Part-time Teacher Management**: Track when part-time teachers work (e.g., only Monday-Wednesday)
+2. **Meeting Schedules**: Block periods for staff meetings, planning time
+3. **Optimization Hints**: Mark preferred teaching times for schedule optimization
+4. **Temporary Absences**: Use date ranges for known absences (Elternzeit, training)
+
+---
+
 ### Classes
 
 #### GET /api/v1/classes
@@ -324,6 +557,7 @@ Create a new schedule entry.
 - Prevents class conflicts (same class with two subjects)
 - Prevents room conflicts (same room booked twice)
 - Prevents scheduling during break periods
+- Prevents scheduling when teacher is not available (BLOCKED periods)
 - `week_type` must be "ALL", "A", or "B"
 
 #### PUT /api/v1/schedule/{id}
@@ -404,6 +638,7 @@ Validate a schedule entry for conflicts without saving.
 - `class_conflict`: Class already has a subject
 - `room_conflict`: Room already booked
 - `break_conflict`: Attempting to schedule during break
+- `availability_conflict`: Teacher is not available during this period
 
 #### GET /api/v1/schedule/conflicts
 List all conflicts in the current schedule.
@@ -598,4 +833,4 @@ Run the test suite:
 make test
 ```
 
-Currently 74 tests covering all models and endpoints.
+Currently 90 tests covering all models and endpoints.

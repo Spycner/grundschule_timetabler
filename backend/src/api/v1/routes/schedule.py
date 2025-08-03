@@ -30,6 +30,11 @@ def create_schedule(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot schedule during break periods",
             ) from e
+        if "not available" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Teacher is not available during this period",
+            ) from e
         if "teacher" in error_msg:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -100,6 +105,11 @@ def update_schedule(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot schedule during break periods",
+            ) from e
+        if "not available" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Teacher is not available during this period",
             ) from e
         if "teacher" in error_msg:
             raise HTTPException(

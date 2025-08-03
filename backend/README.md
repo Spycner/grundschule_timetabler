@@ -12,7 +12,7 @@ Backend API for the Grundschule Timetabler application - a scheduling system for
 - **uv** - Package manager
 - **Ruff** - Linter and formatter
 - **ty** - Type checker (from Astral)
-- **pytest** - Testing framework with asyncio support (74 tests)
+- **pytest** - Testing framework with asyncio support (90 tests)
 
 ## Project Structure
 
@@ -238,6 +238,21 @@ All endpoints are versioned under `/api/v1/`
   - Body: Any fields to update
 - `DELETE /api/v1/teachers/{id}` - Delete teacher
 
+### Teacher Availability Management
+
+- `GET /api/v1/teachers/{id}/availability` - Get teacher's availability
+  - Query params: `weekday` (0-4), `period` (1-8), `active_date`
+- `POST /api/v1/teachers/{id}/availability` - Create availability entry
+  - Body: `{weekday, period, availability_type, effective_from, effective_until, reason}`
+- `PUT /api/v1/teachers/{id}/availability/{availability_id}` - Update availability
+  - Body: Any fields to update
+- `DELETE /api/v1/teachers/{id}/availability/{availability_id}` - Delete availability
+- `POST /api/v1/teachers/availability/bulk` - Bulk import availability
+  - Body: `{teacher_id, availabilities: [{weekday, period, ...}]}`
+- `GET /api/v1/teachers/{id}/availability/overview` - Get availability overview
+- `GET /api/v1/teachers/{id}/availability/validate` - Validate constraints
+- `GET /api/v1/teachers/availability/overview` - All teachers overview
+
 ### Class Management
 
 - `GET /api/v1/classes` - List all classes
@@ -289,11 +304,11 @@ All endpoints are versioned under `/api/v1/`
 - `POST /api/v1/schedule/validate` - Validate schedule for conflicts
 - `GET /api/v1/schedule/conflicts` - List all conflicts in current schedule
 
-### Coming Soon
+### Notes
 
-- Subject management
-- Timetable generation
-- Conflict resolution
+- **Teacher Availability**: The system now tracks when teachers are available, blocked, or prefer certain time slots
+- **Schedule Validation**: Creating schedules automatically checks teacher availability and prevents conflicts
+- **Weekday Convention**: Availability uses 0-4 (Monday-Friday), TimeSlots use 1-5
 
 ## Environment Variables
 
