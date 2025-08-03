@@ -1,7 +1,7 @@
 # Implement Basic Scheduling Algorithm
 
 ## Priority
-High
+Medium
 
 ## Created
 2025-08-03

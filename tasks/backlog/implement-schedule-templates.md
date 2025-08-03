@@ -1,7 +1,7 @@
 # Implement Schedule Templates
 
 ## Priority
-Medium
+Low
 
 ## Created
 2025-08-03
