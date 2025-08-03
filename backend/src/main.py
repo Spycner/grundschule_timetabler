@@ -6,9 +6,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.routes import health
+from src.api.v1 import router as v1_router
 from src.config import get_settings
-from src.models.database import init_db
+from src.models import Teacher  # noqa: F401 - Import to register model
 
 settings = get_settings()
 
@@ -21,9 +21,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print(f"Environment: {settings.environment}")
     print(f"Database: {settings.database_url}")
 
-    # Initialize database
-    init_db()
-    print("Database initialized")
+    # Database is now managed by Alembic migrations
+    # Run: make migrate-up to apply migrations
+    print("Database managed by Alembic migrations")
 
     yield
 
@@ -49,7 +49,7 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(health.router, prefix="/api")
+app.include_router(v1_router.router, prefix="/api/v1")
 
 
 @app.get("/")
@@ -59,5 +59,5 @@ async def root() -> dict[str, str]:
         "message": "Welcome to Grundschule Timetabler API",
         "version": settings.app_version,
         "docs": "/docs",
-        "health": "/api/health",
+        "health": "/api/v1/health",
     }

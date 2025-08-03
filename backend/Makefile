@@ -51,6 +51,13 @@ migrate-down: ## Rollback one migration
 migrate-history: ## Show migration history
 	uv run alembic history
 
+migrate-current: ## Show current migration version
+	uv run alembic current
+
+migrate-reset: ## Reset database and apply all migrations
+	rm -f timetabler.db
+	uv run alembic upgrade head
+
 clean: ## Clean up generated files
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true

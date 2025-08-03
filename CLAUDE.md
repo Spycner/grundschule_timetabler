@@ -140,6 +140,10 @@ def test_create_teacher():
 - Health check endpoints
 - Test structure
 - Pre-commit hooks configuration
+- **API versioning structure** (`/api/v1/`)
+- **Teacher model** with full CRUD operations (TDD approach)
+- **Alembic migrations** for database management
+- **15 comprehensive tests** for Teacher endpoints
 
 ### Current Phase: MVP Foundation (Simplified Approach)
 Focus: Get a working prototype for testing with real users (Hesse pre-school contacts)
@@ -205,6 +209,13 @@ make typecheck       # Run ty type checker
 make format          # Format code with ruff
 make lint            # Lint code with ruff
 
+# Database migrations:
+make migrate-up      # Apply migrations
+make migrate-down    # Rollback last migration
+make migrate-create name="description"  # Create new migration
+make migrate-current # Show current migration
+make migrate-history # Show migration history
+
 # Or manually:
 uv sync              # Install dependencies
 uv run uvicorn src.main:app --reload  # Run server
@@ -212,6 +223,7 @@ uv run pytest        # Run tests
 uv run ruff check .  # Lint
 uv run ruff format . # Format
 uvx --native-tls ty check  # Type check
+uv run alembic upgrade head  # Apply migrations
 ```
 
 ### Frontend
@@ -249,9 +261,20 @@ npm test
 - `GET /` - Welcome message (unversioned)
 - `GET /api/v1/health` - Basic health check
 - `GET /api/v1/health/ready` - Database connectivity check
+- `GET /api/v1/teachers` - List all teachers
+- `GET /api/v1/teachers/{id}` - Get specific teacher
+- `POST /api/v1/teachers` - Create new teacher
+- `PUT /api/v1/teachers/{id}` - Update teacher
+- `DELETE /api/v1/teachers/{id}` - Delete teacher
+
+### Database Management
+- **Alembic Migrations**: Database schema is now managed via migrations
+- **Current Migration**: `71430f948602_initial_migration_with_teacher_model`
+- **Apply Migrations**: Run `make migrate-up` before starting the server
+- **Create Migrations**: Use `make migrate-create name="description"` for schema changes
 
 ### Immediate Next Steps (MVP Focus)
-1. Create simple Teacher model with basic CRUD (TDD)
+1. ~~Create simple Teacher model with basic CRUD (TDD)~~ ✅
 2. Create simple Class model with basic CRUD (TDD)
 3. Create simple Subject model with basic CRUD (TDD)
 4. Create TimeSlot model for schedule grid (TDD)
