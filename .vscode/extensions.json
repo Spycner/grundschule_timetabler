@@ -1,0 +1,34 @@
+{
+  "recommendations": [
+    // Python
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff",
+    
+    // General development
+    "editorconfig.editorconfig",
+    "tamasfe.even-better-toml",
+    "yzhang.markdown-all-in-one",
+    "ms-vscode.makefile-tools",
+    
+    // Git
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    
+    // Docker (for future use)
+    "ms-azuretools.vscode-docker",
+    
+    // Database
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-sqlite",
+    "mtxr.sqltools-driver-pg",
+    
+    // API testing
+    "humao.rest-client",
+    
+    // TypeScript/React (for frontend)
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss"
+  ]
+}

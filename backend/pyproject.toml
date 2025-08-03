@@ -1,0 +1,33 @@
+[project]
+name = "grundschule-timetabler-backend"
+version = "0.1.0"
+description = "Backend API for Grundschule Timetabler - A scheduling system for German elementary schools"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Pascal Kraus", email = "pascal98kraus@gmail.com" }
+]
+dependencies = [
+    "alembic>=1.16.4",
+    "fastapi>=0.116.1",
+    "psycopg2-binary>=2.9.10",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "python-dotenv>=1.1.1",
+    "sqlalchemy>=2.0.42",
+    "uvicorn>=0.35.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "ruff>=0.12.7",
+]
+
+[tool.ty]
+# ty configuration - currently minimal as ty is in alpha
+# Rules can be configured here as needed
+# Example: [tool.ty.rules]
+# deprecated = "ignore"
