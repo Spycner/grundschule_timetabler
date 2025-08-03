@@ -18,13 +18,14 @@ A modern, web-based timetabling application designed specifically for German Gru
 - API versioning structure (`/api/v1/`)
 - Teacher model with full CRUD operations
 - Class model with full CRUD operations
+- Subject model with full CRUD operations
 - Database migrations with Alembic
-- Test-Driven Development setup (33 tests passing)
+- Test-Driven Development setup (47 tests passing)
 - Pre-commit hooks for code quality
 - Development tooling (uv, ruff, ty)
+- Development data seeders for all models
 
 ### 🚧 In Progress
-- Subject model implementation
 - Time slot management
 - Basic scheduling logic
 
