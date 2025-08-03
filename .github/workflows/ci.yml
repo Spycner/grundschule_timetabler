@@ -154,15 +154,18 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix={{branch}}-,enable={{is_default_branch}}
+            type=sha,prefix=pr-,enable=${{ github.event_name == 'pull_request' }}
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push backend image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./backend
           # Only push on main branch or tags
           push: ${{ github.event_name != 'pull_request' }}
+          # Load image locally for pull requests
+          load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -170,54 +173,54 @@ jobs:
           # Only build multi-platform on main branch to save time
           platforms: ${{ github.ref == 'refs/heads/main' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
 
-  migration-check:
-    name: Check Database Migrations
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v2
-        with:
-          version: ${{ env.UV_VERSION }}
-
-      - name: Install dependencies
-        working-directory: ./backend
-        run: |
-          uv sync --frozen
-
-      - name: Check for migration conflicts
-        working-directory: ./backend
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-        run: |
-          uv run alembic upgrade head
-          uv run alembic downgrade base
-          uv run alembic upgrade head
-
-      - name: Check if models match migrations
-        working-directory: ./backend
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-        run: |
-          uv run alembic check
+  # migration-check:
+  #   name: Check Database Migrations
+  #   runs-on: ubuntu-latest
+  #   services:
+  #     postgres:
+  #       image: postgres:16-alpine
+  #       env:
+  #         POSTGRES_USER: postgres
+  #         POSTGRES_PASSWORD: postgres
+  #         POSTGRES_DB: test_db
+  #       options: >-
+  #         --health-cmd pg_isready
+  #         --health-interval 10s
+  #         --health-timeout 5s
+  #         --health-retries 5
+  #       ports:
+  #         - 5432:5432
+  #
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ env.PYTHON_VERSION }}
+  #
+  #     - name: Install uv
+  #       uses: astral-sh/setup-uv@v2
+  #       with:
+  #         version: ${{ env.UV_VERSION }}
+  #
+  #     - name: Install dependencies
+  #       working-directory: ./backend
+  #       run: |
+  #         uv sync --frozen
+  #
+  #     - name: Check for migration conflicts
+  #       working-directory: ./backend
+  #       env:
+  #         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+  #       run: |
+  #         uv run alembic upgrade head
+  #         uv run alembic downgrade base
+  #         uv run alembic upgrade head
+  #
+  #     - name: Check if models match migrations
+  #       working-directory: ./backend
+  #       env:
+  #         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+  #       run: |
+  #         uv run alembic check

@@ -412,9 +412,9 @@ class TestSchedulingAlgorithm:
             assert schedule.timeslot_id == timeslot.id
 
             # Verify quality score
-            assert (
-                solution.quality_score > 0
-            ), "Valid schedule should have positive quality score"
+            assert solution.quality_score > 0, (
+                "Valid schedule should have positive quality score"
+            )
 
         else:
             print("\n❌ No schedules generated despite feasible solution")

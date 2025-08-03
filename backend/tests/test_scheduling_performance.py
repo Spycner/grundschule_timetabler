@@ -115,19 +115,19 @@ class TestSchedulingPerformance:
             )
 
             # Performance assertions
-            assert (
-                actual_runtime <= time_limit + 2
-            ), f"Runtime {actual_runtime:.2f}s exceeded limit {time_limit}s by too much"
+            assert actual_runtime <= time_limit + 2, (
+                f"Runtime {actual_runtime:.2f}s exceeded limit {time_limit}s by too much"
+            )
 
             if solution.is_feasible:
                 # Note: With current seed data, solution may be feasible but empty due to constraints
                 # This is acceptable for performance testing
-                assert (
-                    solution.quality_score >= 0
-                ), "Quality score should be non-negative"
-                assert (
-                    solution.quality_score <= 100
-                ), "Quality score should not exceed 100"
+                assert solution.quality_score >= 0, (
+                    "Quality score should be non-negative"
+                )
+                assert solution.quality_score <= 100, (
+                    "Quality score should not exceed 100"
+                )
 
             # Test constraint satisfaction
             if solution.schedules:
@@ -137,9 +137,9 @@ class TestSchedulingPerformance:
 
                 # In a well-functioning algorithm, there should be minimal conflicts
                 # We allow some flexibility for the test environment
-                assert (
-                    conflict_count <= len(solution.schedules) * 0.1
-                ), "Too many constraint violations"
+                assert conflict_count <= len(solution.schedules) * 0.1, (
+                    "Too many constraint violations"
+                )
 
         # Compare performance across time limits
         print("\n--- Performance Summary ---")
@@ -214,9 +214,9 @@ class TestSchedulingPerformance:
 
             # The database should contain the generated schedules if any were created
             if solution.schedule_count > 0:
-                assert (
-                    db_schedule_count > 0
-                ), "Generated schedules should be saved to database"
+                assert db_schedule_count > 0, (
+                    "Generated schedules should be saved to database"
+                )
             else:
                 print(
                     "No schedules generated due to constraint restrictions - this is acceptable for performance testing"
@@ -227,9 +227,9 @@ class TestSchedulingPerformance:
             print(f"Statistics: {stats}")
 
             if solution.schedule_count > 0:
-                assert (
-                    stats["total_schedules"] == db_schedule_count
-                ), "Statistics should match database count"
+                assert stats["total_schedules"] == db_schedule_count, (
+                    "Statistics should match database count"
+                )
 
         print("=" * 50)
 
@@ -344,8 +344,8 @@ class TestSchedulingPerformance:
         )
 
         # OR-Tools CP-SAT is designed for problems of this scale
-        assert (
-            projected_runtime <= 60
-        ), "Should be feasible for production scale within 60s"
+        assert projected_runtime <= 60, (
+            "Should be feasible for production scale within 60s"
+        )
 
         print("=" * 50)
