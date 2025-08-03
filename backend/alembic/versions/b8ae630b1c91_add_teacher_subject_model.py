@@ -33,7 +33,7 @@ def upgrade() -> None:
     sa.Column('certification_document', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.CheckConstraint("grades IS NULL OR (grades != '[]' AND JSON_ARRAY_LENGTH(grades) > 0)", name='ck_grades_not_empty'),
+    # Note: Grades validation handled in application code due to DB compatibility issues
     sa.ForeignKeyConstraint(['subject_id'], ['subjects.id'], ),
     sa.ForeignKeyConstraint(['teacher_id'], ['teachers.id'], ),
     sa.PrimaryKeyConstraint('id'),

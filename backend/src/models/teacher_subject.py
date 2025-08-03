@@ -5,7 +5,6 @@ from datetime import UTC, date, datetime
 
 from sqlalchemy import (
     JSON,
-    CheckConstraint,
     Column,
     Date,
     DateTime,
@@ -35,11 +34,8 @@ class TeacherSubject(Base):
     __table_args__ = (
         # Unique constraint: One entry per teacher-subject combination
         UniqueConstraint("teacher_id", "subject_id", name="uq_teacher_subject"),
-        # Check constraint for grades
-        CheckConstraint(
-            "grades IS NULL OR (grades != '[]' AND JSON_ARRAY_LENGTH(grades) > 0)",
-            name="ck_grades_not_empty",
-        ),
+        # Note: Grades validation is handled in application code
+        # Database-level constraint is omitted due to DB-specific JSON syntax differences
     )
 
     id = Column(Integer, primary_key=True, index=True)
