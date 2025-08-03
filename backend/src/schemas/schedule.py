@@ -163,3 +163,53 @@ class ScheduleQueryParams(BaseModel):
     week_type: str | None = Field(None, pattern="^(ALL|A|B)$")
     day: int | None = Field(None, ge=1, le=5)
     include_breaks: bool = Field(default=True)
+
+
+class ScheduleGenerationRequest(BaseModel):
+    """Request schema for schedule generation."""
+
+    preserve_existing: bool = Field(
+        default=True, description="Keep existing schedule entries"
+    )
+    clear_existing: bool = Field(
+        default=False, description="Delete all existing schedules before generating"
+    )
+    time_limit_seconds: int = Field(
+        default=60, ge=10, le=300, description="Maximum solving time in seconds"
+    )
+
+
+class ScheduleOptimizationRequest(BaseModel):
+    """Request schema for schedule optimization."""
+
+    time_limit_seconds: int = Field(
+        default=60, ge=10, le=300, description="Maximum solving time in seconds"
+    )
+
+
+class SchedulingSolutionResponse(BaseModel):
+    """Response schema for scheduling algorithm results."""
+
+    schedules: list[ScheduleCreate]
+    quality_score: float = Field(description="Solution quality score (0-100)")
+    generation_time: float = Field(
+        description="Time taken to generate solution in seconds"
+    )
+    satisfied_constraints: list[str] = Field(
+        description="List of satisfied constraint types"
+    )
+    violated_constraints: list[str] = Field(
+        description="List of violated constraint types"
+    )
+    objective_value: int = Field(description="Solver objective value")
+    is_feasible: bool = Field(description="Whether the solution is feasible")
+    schedule_count: int = Field(description="Number of scheduled lessons")
+
+
+class ScheduleStatisticsResponse(BaseModel):
+    """Response schema for schedule statistics."""
+
+    total_schedules: int
+    schedules_by_teacher: dict[str, int]
+    schedules_by_class: dict[str, int]
+    schedules_by_subject: dict[str, int]

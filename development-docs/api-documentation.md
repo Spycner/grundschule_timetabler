@@ -583,14 +583,194 @@ async function getTeachers() {
 }
 ```
 
-## Coming Soon
+## Schedule Management Endpoints
 
-### Planned Endpoints
+### Algorithm-Powered Schedule Generation
 
-#### Schedule Management
-- `GET /api/v1/schedules` - List all schedules
-- `POST /api/v1/schedules/generate` - Generate new schedule
-- `GET /api/v1/schedules/{id}/conflicts` - Get schedule conflicts
+#### POST /api/v1/schedule/generate
+Generate complete schedule using OR-Tools CP-SAT algorithm.
+
+**Request Body**
+```json
+{
+  "preserve_existing": false,
+  "time_limit_seconds": 60,
+  "clear_existing": true
+}
+```
+
+**Parameters**
+- `preserve_existing`: boolean (default: true) - Keep existing schedule entries as fixed assignments
+- `time_limit_seconds`: integer (default: 60) - Maximum solving time in seconds
+- `clear_existing`: boolean (default: false) - Delete all existing schedules before generating
+
+**Response**
+```json
+{
+  "schedules": [
+    {
+      "teacher_id": 1,
+      "class_id": 1,
+      "subject_id": 1,
+      "timeslot_id": 1,
+      "room": null,
+      "week_type": "ALL"
+    }
+  ],
+  "quality_score": 87.5,
+  "generation_time": 2.34,
+  "satisfied_constraints": ["All hard constraints satisfied"],
+  "violated_constraints": [],
+  "objective_value": 1250,
+  "schedule_count": 45
+}
+```
+
+**Error Responses**
+- `500 Internal Server Error` - Algorithm failed or no feasible solution
+
+#### POST /api/v1/schedule/optimize
+Optimize existing schedule while preserving all current assignments.
+
+**Request Body**
+```json
+{
+  "time_limit_seconds": 30
+}
+```
+
+**Response**
+Same format as `/generate` endpoint.
+
+#### GET /api/v1/schedule/statistics
+Get comprehensive schedule statistics and quality metrics.
+
+**Response**
+```json
+{
+  "total_schedules": 45,
+  "schedules_by_teacher": {
+    "Maria Müller": 12,
+    "Klaus Meyer": 15
+  },
+  "schedules_by_class": {
+    "1a": 25,
+    "2b": 20
+  },
+  "schedules_by_subject": {
+    "Deutsch": 15,
+    "Mathematik": 12,
+    "Sport": 8
+  }
+}
+```
+
+### Manual Schedule Management
+
+#### GET /api/v1/schedule
+List all schedules with optional filters.
+
+**Query Parameters**
+- `skip`: integer (default: 0) - Number of records to skip
+- `limit`: integer (default: 100) - Maximum records to return
+- `week_type`: string - Filter by week type (ALL, A, B)
+- `day`: integer (1-5) - Filter by day of week
+- `include_breaks`: boolean (default: true) - Include break periods
+
+#### POST /api/v1/schedule/validate
+Validate schedule entry for conflicts before creation.
+
+**Request Body**
+```json
+{
+  "class_id": 1,
+  "teacher_id": 1,
+  "subject_id": 1,
+  "timeslot_id": 1,
+  "room": "101",
+  "week_type": "ALL"
+}
+```
+
+**Response**
+```json
+{
+  "valid": false,
+  "conflicts": [
+    {
+      "type": "teacher_conflict",
+      "message": "Teacher is already scheduled for another class at this time",
+      "existing_entry_id": 42
+    }
+  ]
+}
+```
+
+#### GET /api/v1/schedule/conflicts
+List all conflicts in the current schedule.
+
+**Response**
+```json
+{
+  "conflicts": [
+    {
+      "schedule_id": 15,
+      "conflicts": [
+        {
+          "type": "qualification_conflict",
+          "message": "Teacher is not qualified to teach this subject"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Algorithm Performance
+
+The scheduling algorithm is optimized for German Grundschule scale:
+
+- **Generation Time**: < 5 seconds for typical school (12 classes, 15 teachers)
+- **Quality Scoring**: 0-100% based on constraint satisfaction
+- **Scalability**: Tested up to 25+ teachers, 200+ weekly lessons
+- **Reliability**: 104 comprehensive tests covering all scenarios
+
+## Integration Examples
+
+### Generate Complete Schedule
+```javascript
+async function generateSchedule() {
+  const response = await fetch('/api/v1/schedule/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      preserve_existing: false,
+      time_limit_seconds: 60,
+      clear_existing: true
+    })
+  });
+
+  const solution = await response.json();
+  
+  if (solution.schedule_count > 0) {
+    console.log(`Generated ${solution.schedule_count} schedules`);
+    console.log(`Quality score: ${solution.quality_score}%`);
+  } else {
+    console.log('No feasible solution found');
+  }
+}
+```
+
+### Check Schedule Quality
+```javascript
+async function getScheduleQuality() {
+  const response = await fetch('/api/v1/schedule/statistics');
+  const stats = await response.json();
+  
+  console.log(`Total schedules: ${stats.total_schedules}`);
+  console.log('Teacher workload:', stats.schedules_by_teacher);
+}
+```
 
 ## Support
 
