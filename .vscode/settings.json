@@ -4,6 +4,12 @@
   "python.terminal.activateEnvironment": true,
   "python.terminal.activateEnvInCurrentTerminal": true,
   
+  // ty type checker settings
+  "ty.typeCheckingMode": "standard",
+  "ty.path": ["uvx", "--native-tls", "ty"],
+  "ty.interpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+  "ty.extraPaths": ["${workspaceFolder}/backend/src"],
+  
   // Ruff settings
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
