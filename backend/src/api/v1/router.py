@@ -8,6 +8,7 @@ from src.api.v1.routes import (
     schedule,
     subjects,
     teacher_availability,
+    teacher_subjects,
     teachers,
     timeslots,
 )
@@ -23,6 +24,19 @@ router.include_router(teachers.router, prefix="/teachers", tags=["teachers"])
 # Include teacher availability routes (must be after teachers to avoid conflicts)
 router.include_router(
     teacher_availability.router, prefix="/teachers", tags=["teacher-availability"]
+)
+
+# Include teacher-subject routes
+router.include_router(
+    teacher_subjects.router, prefix="/teachers", tags=["teacher-subjects"]
+)
+router.include_router(
+    teacher_subjects.subjects_router, prefix="/subjects", tags=["teacher-subjects"]
+)
+router.include_router(
+    teacher_subjects.matrix_router,
+    prefix="/teacher-subjects",
+    tags=["teacher-subjects"],
 )
 
 # Include classes routes

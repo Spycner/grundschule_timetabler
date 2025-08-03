@@ -147,11 +147,12 @@ def test_create_teacher():
 - **TimeSlot model** with schedule grid management (TDD approach)
 - **Schedule model** with comprehensive conflict detection (TDD approach)
 - **Teacher Availability model** with AVAILABLE/BLOCKED/PREFERRED states (TDD approach)
+- **Teacher-Subject Assignment model** with PRIMARY/SECONDARY/SUBSTITUTE qualifications (TDD approach)
 - **Alembic migrations** for database management
-- **90 comprehensive tests** total (15 Teacher, 15 Class, 14 Subject, 13 TimeSlot, 14 Schedule, 16 Teacher Availability, 3 Health)
+- **104 comprehensive tests** total (15 Teacher, 15 Class, 14 Subject, 13 TimeSlot, 14 Schedule, 16 Teacher Availability, 14 Teacher-Subject, 3 Health)
 - **Docker & Docker Compose** configuration (with Valkey instead of Redis)
 - **GitHub Actions CI/CD** pipeline with comprehensive checks
-- **Development data seeders** for teachers, classes, subjects, and timeslots (40 slots: 5 days × 8 periods)
+- **Development data seeders** for teachers, classes, subjects, timeslots, and teacher-subject assignments (40 slots: 5 days × 8 periods)
 
 ### Current Phase: MVP Foundation (Simplified Approach)
 Focus: Get a working prototype for testing with real users (Hesse pre-school contacts)
@@ -319,6 +320,16 @@ docker-compose up -d
 - `GET /api/v1/teachers/{id}/availability/validate` - Validate constraints
 - `GET /api/v1/teachers/availability/overview` - All teachers overview
 
+**Teacher-Subject Assignments:**
+- `GET /api/v1/teachers/{id}/subjects` - Get teacher's subject qualifications
+- `POST /api/v1/teachers/{id}/subjects` - Assign subject to teacher
+- `PUT /api/v1/teachers/{id}/subjects/{id}` - Update assignment
+- `DELETE /api/v1/teachers/{id}/subjects/{id}` - Delete assignment
+- `GET /api/v1/teachers/{id}/workload` - Get teacher workload calculation
+- `GET /api/v1/subjects/{id}/teachers` - Get qualified teachers for subject
+- `GET /api/v1/subjects/{id}/teachers/by-grade/{grade}` - Get teachers by grade
+- `GET /api/v1/teacher-subjects/matrix` - Get qualification matrix overview
+
 **Classes:**
 - `GET /api/v1/classes` - List all classes
 - `GET /api/v1/classes/{id}` - Get specific class
@@ -344,19 +355,19 @@ docker-compose up -d
 **Schedule:**
 - `GET /api/v1/schedule` - List all schedules with filters
 - `GET /api/v1/schedule/{id}` - Get specific schedule entry
-- `POST /api/v1/schedule` - Create new schedule entry (checks availability)
+- `POST /api/v1/schedule` - Create new schedule entry (checks qualifications & availability)
 - `PUT /api/v1/schedule/{id}` - Update schedule entry
 - `DELETE /api/v1/schedule/{id}` - Delete schedule entry
 - `GET /api/v1/schedule/class/{id}` - Get schedule by class
 - `GET /api/v1/schedule/teacher/{id}` - Get schedule by teacher
 - `GET /api/v1/schedule/room/{room}` - Get schedule by room
-- `POST /api/v1/schedule/validate` - Validate for conflicts (including availability)
+- `POST /api/v1/schedule/validate` - Validate for conflicts (including qualifications & availability)
 - `GET /api/v1/schedule/conflicts` - List all conflicts
 - `POST /api/v1/schedule/bulk` - Create multiple entries
 
 ### Database Management
 - **Alembic Migrations**: Database schema is now managed via migrations
-- **Current Migration**: `214fec70abb4_add_teacher_availability_model`
+- **Current Migration**: `20cbb13b9d21_add_teacher_subject_model`
 - **Apply Migrations**: Run `make migrate-up` before starting the server
 - **Create Migrations**: Use `make migrate-create name="description"` for schema changes
 - **Important**: All models must be imported in `src/models/__init__.py` for Alembic to detect them
@@ -374,7 +385,7 @@ The following backend features are planned to complete the MVP:
 
 #### High Priority
 - ✅ **Teacher Availability Model** - Track when teachers can teach (part-time, blocked periods)
-- **Teacher-Subject Assignment** - Manage qualifications and teaching assignments
+- ✅ **Teacher-Subject Assignment** - Manage qualifications and teaching assignments
 - **Basic Scheduling Algorithm** - Automatic timetable generation with constraint solving
 
 #### Medium Priority  

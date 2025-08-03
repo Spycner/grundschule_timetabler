@@ -328,6 +328,216 @@ Get availability overview for all teachers.
 
 ---
 
+### Teacher-Subject Assignments
+
+Manage which teachers are qualified to teach specific subjects, including qualification levels, grade restrictions, and certifications.
+
+#### GET /api/v1/teachers/{teacher_id}/subjects
+Get all subject qualifications for a specific teacher.
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "teacher_id": 1,
+    "subject_id": 1,
+    "qualification_level": "PRIMARY",
+    "grades": [1, 2, 3, 4],
+    "max_hours_per_week": 10,
+    "certification_date": "2020-09-01",
+    "certification_expires": "2025-08-31",
+    "certification_document": "Sport Teaching Certificate",
+    "created_at": "2025-08-03T10:00:00",
+    "updated_at": "2025-08-03T10:00:00",
+    "subject": {
+      "id": 1,
+      "name": "Sport",
+      "code": "SP",
+      "color": "#10B981"
+    }
+  }
+]
+```
+
+#### POST /api/v1/teachers/{teacher_id}/subjects
+Assign a subject qualification to a teacher.
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+
+**Request Body:**
+```json
+{
+  "subject_id": 1,
+  "qualification_level": "PRIMARY",
+  "grades": [1, 2, 3, 4],
+  "max_hours_per_week": 10,
+  "certification_date": "2020-09-01",
+  "certification_expires": "2025-08-31",
+  "certification_document": "Sport Teaching Certificate"
+}
+```
+
+**Qualification Levels:**
+- `PRIMARY`: Teacher's main subject specialization (preferred for scheduling)
+- `SECONDARY`: Teacher can teach this subject competently
+- `SUBSTITUTE`: Teacher can cover this subject in emergencies only
+
+**Validation Rules:**
+- `grades`: Array of integers 1-4 (Grundschule grades)
+- `max_hours_per_week`: Optional hours limit for this subject
+- `certification_expires`: Must be after `certification_date` if provided
+- Unique constraint: One qualification per teacher-subject pair
+
+#### PUT /api/v1/teachers/{teacher_id}/subjects/{subject_id}
+Update a teacher-subject qualification.
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+- `subject_id` (int): The subject's ID
+
+**Request Body (all fields optional):**
+```json
+{
+  "qualification_level": "SECONDARY",
+  "grades": [3, 4],
+  "max_hours_per_week": 8
+}
+```
+
+#### DELETE /api/v1/teachers/{teacher_id}/subjects/{subject_id}
+Remove a subject qualification from a teacher.
+
+**Response:** 204 No Content
+
+#### GET /api/v1/teachers/{teacher_id}/workload
+Get teacher's workload calculation across all subject assignments.
+
+**Path Parameters:**
+- `teacher_id` (int): The teacher's ID
+
+**Response:**
+```json
+{
+  "teacher_id": 1,
+  "total_assigned_hours": 18,
+  "max_hours_per_week": 28,
+  "available_hours": 10,
+  "subjects": [
+    {
+      "subject_id": 1,
+      "subject_name": "Mathematik",
+      "qualification_level": "PRIMARY",
+      "max_hours_per_week": 10,
+      "grades": [1, 2]
+    },
+    {
+      "subject_id": 2,
+      "subject_name": "Deutsch",
+      "qualification_level": "SECONDARY",
+      "max_hours_per_week": 8,
+      "grades": [1, 2, 3, 4]
+    }
+  ]
+}
+```
+
+#### GET /api/v1/subjects/{subject_id}/teachers
+Get all teachers qualified for a specific subject.
+
+**Path Parameters:**
+- `subject_id` (int): The subject's ID
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "teacher_id": 1,
+    "subject_id": 1,
+    "qualification_level": "PRIMARY",
+    "grades": [1, 2, 3, 4],
+    "max_hours_per_week": 10,
+    "created_at": "2025-08-03T10:00:00",
+    "updated_at": "2025-08-03T10:00:00",
+    "teacher": {
+      "id": 1,
+      "first_name": "Maria",
+      "last_name": "Müller",
+      "abbreviation": "MUE",
+      "max_hours_per_week": 28,
+      "is_part_time": false
+    }
+  }
+]
+```
+
+**Note:** Results are automatically sorted by qualification level (PRIMARY first, then SECONDARY, then SUBSTITUTE).
+
+#### GET /api/v1/subjects/{subject_id}/teachers/by-grade/{grade}
+Get teachers qualified for a subject at a specific grade level.
+
+**Path Parameters:**
+- `subject_id` (int): The subject's ID
+- `grade` (int): The grade level (1-4)
+
+**Response:** Same format as above, filtered by teachers who can teach the specified grade.
+
+#### GET /api/v1/teacher-subjects/matrix
+Get the complete teacher-subject qualification matrix for overview and reporting.
+
+**Response:**
+```json
+{
+  "teachers": [
+    {
+      "id": 1,
+      "first_name": "Maria",
+      "last_name": "Müller",
+      "abbreviation": "MUE"
+    }
+  ],
+  "subjects": [
+    {
+      "id": 1,
+      "name": "Mathematik",
+      "code": "MA"
+    }
+  ],
+  "assignments": [
+    {
+      "id": 1,
+      "teacher_id": 1,
+      "subject_id": 1,
+      "qualification_level": "PRIMARY",
+      "grades": [1, 2, 3, 4]
+    }
+  ],
+  "summary": {
+    "total_teachers": 8,
+    "total_subjects": 9,
+    "total_assignments": 25,
+    "primary_qualifications": 15,
+    "secondary_qualifications": 7,
+    "substitute_qualifications": 3
+  }
+}
+```
+
+**Use Cases:**
+1. **Qualification Management**: Track which teachers can teach which subjects and at what level
+2. **Scheduling Validation**: Ensure only qualified teachers are assigned to subjects
+3. **Workload Planning**: Calculate how many hours each teacher is committed to
+4. **Certification Tracking**: Monitor expiring certifications (e.g., Sport, First Aid)
+5. **German School Compliance**: Support Klassenlehrer vs Fachlehrer distinctions
+6. **Grade Restrictions**: Some teachers may only be qualified for specific grades
+
+---
+
 ### Classes
 
 #### GET /api/v1/classes
@@ -553,6 +763,7 @@ Create a new schedule entry.
 ```
 
 **Validation:**
+- Validates teacher qualification for the subject (PRIMARY/SECONDARY/SUBSTITUTE)
 - Prevents teacher conflicts (same teacher in two places)
 - Prevents class conflicts (same class with two subjects)
 - Prevents room conflicts (same room booked twice)
@@ -634,6 +845,7 @@ Validate a schedule entry for conflicts without saving.
 ```
 
 **Conflict Types:**
+- `qualification_conflict`: Teacher is not qualified to teach this subject
 - `teacher_conflict`: Teacher already scheduled
 - `class_conflict`: Class already has a subject
 - `room_conflict`: Room already booked
@@ -825,6 +1037,7 @@ This creates:
 - 8 sample classes (2 per grade)
 - 9 sample subjects
 - 40 timeslots (standard weekly schedule)
+- 25 teacher-subject assignments with realistic qualifications
 - Sample schedule entries for class 1a (including A/B week examples)
 
 ### Testing
@@ -833,4 +1046,4 @@ Run the test suite:
 make test
 ```
 
-Currently 90 tests covering all models and endpoints.
+Currently 104 tests covering all models and endpoints.

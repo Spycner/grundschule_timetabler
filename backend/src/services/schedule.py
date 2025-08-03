@@ -10,6 +10,7 @@ from src.models.teacher_availability import AvailabilityType
 from src.models.timeslot import TimeSlot
 from src.schemas.schedule import ConflictDetail, ScheduleCreate, ScheduleUpdate
 from src.services.teacher_availability import TeacherAvailabilityService
+from src.services.teacher_subject import TeacherSubjectService
 
 
 class ScheduleService:
@@ -166,6 +167,18 @@ class ScheduleService:
         """Validate a schedule entry for conflicts."""
         conflicts = []
 
+        # Check teacher qualification for the subject FIRST
+        qualification = TeacherSubjectService.check_teacher_qualification(
+            db, schedule.teacher_id, schedule.subject_id
+        )
+        if not qualification:
+            conflicts.append(
+                ConflictDetail(
+                    type="qualification_conflict",
+                    message="Teacher is not qualified to teach this subject",
+                )
+            )
+
         # Check if timeslot is a break
         timeslot = (
             db.query(TimeSlot).filter(TimeSlot.id == schedule.timeslot_id).first()
@@ -258,7 +271,9 @@ class ScheduleService:
         # Validate for conflicts
         conflicts = ScheduleService.validate_schedule(db, schedule)
         if conflicts:
-            # Raise appropriate error based on conflict type
+            # Raise appropriate error based on conflict type (prioritize qualification first)
+            if any(c.type == "qualification_conflict" for c in conflicts):
+                raise ValueError("Teacher is not qualified to teach this subject")
             if any(c.type == "break_conflict" for c in conflicts):
                 raise ValueError("Cannot schedule during break periods")
             if any(c.type == "availability_conflict" for c in conflicts):
@@ -269,6 +284,8 @@ class ScheduleService:
                 raise ValueError("Class conflict detected")
             if any(c.type == "room_conflict" for c in conflicts):
                 raise ValueError("Room conflict detected")
+            # If we get here, there's an unknown conflict type
+            raise ValueError(f"Schedule conflict: {conflicts[0].message}")
 
         db_schedule = Schedule(**schedule.model_dump())
         db.add(db_schedule)
